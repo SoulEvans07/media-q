@@ -1,0 +1,19 @@
+{
+  "name": "media-q-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soulevans07/media-q.git"
+  },
+  "author": "soul",
+  "license": "Beerware",
+  "bugs": {
+    "url": "https://github.com/soulevans07/media-q/issues"
+  },
+  "homepage": "https://github.com/soulevans07/media-q#readme"
+}
