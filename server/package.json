@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "babel-watch src/index.js",
+    "start": "babel-watch src",
     "build": "babel src --out-dir dist",
     "serve": "node dist/index.js"
   },
@@ -19,15 +19,19 @@
   },
   "homepage": "https://github.com/soulevans07/media-q#readme",
   "dependencies": {
-    "lodash": "^4.17.11",
-    "require-all": "^3.0.0",
+    "axios": "^0.19.0",
+    "body-parser": "^1.19.0",
+    "chalk": "^3.0.0",
+    "cors": "^2.8.5",
     "dotenv-safe": "^6.1.0",
     "express": "^4.16.4",
-    "body-parser": "^1.19.0",
-    "cors": "^2.8.5",
+    "form-data": "^3.0.0",
     "helmet": "^3.18.0",
+    "html-entities": "^1.2.1",
+    "lodash": "^4.17.11",
     "morgan": "^1.9.1",
-    "html-entities": "^1.2.1"
+    "request": "^2.88.0",
+    "require-all": "^3.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0",
