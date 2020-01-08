@@ -1,4 +1,6 @@
+import fs from 'fs'
 import axios from 'axios'
+import request from 'request'
 
 const storyUserReqVariables = {
   only_stories: true,
@@ -9,6 +11,7 @@ const storyUserReqVariables = {
 const storyUserReqUrl = 'https://www.instagram.com/graphql/query/' +
   '?query_hash=5ff0ea71b469b0c684df3e608a5af0b3' +
   '&variables=' + JSON.stringify(storyUserReqVariables)
+
 
 export const getStoryUrls = function(cookie) {
   return new Promise((resolve, reject) => {
@@ -45,7 +48,7 @@ export const getStoryUrls = function(cookie) {
       const storyReqUrl = 'https://www.instagram.com/graphql/query/' +
         '?query_hash=52a36e788a02a3c612742ed5146f1676'+ 
         '&variables=' + JSON.stringify(storyReqVariables)
-
+      
       axios({
         url: storyReqUrl,
         method: 'GET',
@@ -95,113 +98,117 @@ export const getStoryUrls = function(cookie) {
   })
 }
 
-
-const download = function(url, fileName) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  xhr.responseType = 'blob';
-
-  xhr.onprogress = function(event) {
-    if (event.lengthComputable) {
-        var percentComplete = (event.loaded / event.total)*100;
-        //yourShowProgressFunction(percentComplete);
-    } 
-  };
-
-  xhr.onload = function(event) {
-    if (this.status == 200) {
-      _saveBlob(this.response, fileName);
+const download = function(uri, filename){
+  return new Promise((resolve, reject) => {
+    try {
+      request(uri).pipe(fs.createWriteStream(filename)).on('close', resolve)
+    } catch (e) {
+      reject(e)
     }
-    else {
-      //yourErrorFunction()
-    }
-  };
-
-  xhr.onerror = function(event){
-    //yourErrorFunction()
-  };
-
-  xhr.send();
-}
-
-
-const _saveBlob = function(response, fileName) {
-  if(navigator.msSaveBlob){
-    //OK for IE10+
-    navigator.msSaveBlob(response, fileName);
-  }
-  else{
-    _html5Saver(response, fileName);
-  }
-}
-
-function _html5Saver(blob , fileName) {
-  var a = document.createElement("a");
-  document.body.appendChild(a);
-  a.style = "display: none";
-  var url = window.URL.createObjectURL(blob);
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  document.body.removeChild(a);
+  })
 }
 
 const IMG_PATTERN = /\/\w*\.jpg/
 const VIDEO_PATTERN = /\/\w*\.mp4/
 
-const downloadItem = function(user, item) {
-  let src = null
-  let file = null
-
-  if (item.is_video) {
-    src = item.video
-    file = src.match(VIDEO_PATTERN)[0].substring(1)
-  } else {
-    src = item.image
-    file = src.match(IMG_PATTERN)[0].substring(1)
-  }
-
-  if (src) {
-    download(src, user + '-' + file)
-  }
+const zeroPad = (num, places) => String(num).padStart(places, '0')
+const getTimestampString = function(date) {
+  return date.getFullYear() + '-' + (date.getMonth()+1).pad(2) + '-' + date.getDate().pad(2) + '-' +
+    date.getHours().pad(2) + date.getMinutes().pad(2) + date.getSeconds().pad(2)
 }
 
-export const downloadAllOf = function(userName) {
+const downloadItem = function(user, item, targetFolder) {
+  return new Promise((resolve, reject) => {
+    let src = null
+    let fileName = null
+    const datetime = new Date(item.timestamp * 1000)
+
+    if (item.is_video) {
+      src = item.video
+      fileName = user + '-' + getTimestampString(datetime) + '.mp4'
+    } else {
+      src = item.image
+      fileName = user + '-' + getTimestampString(datetime) + '.jpg'
+    }
+
+    if (src) {
+      const filePath = targetFolder + fileName
+      try {
+        if (fs.existsSync(filePath)){
+          resolve({ fileName, skipped: true })
+        } else {
+          download(src, filePath).then(() => resolve({ fileName, skipped: false }))
+        }
+      } catch(e) {
+        reject(e)
+      }
+    }
+  })
+}
+
+export const downloadAllOf = function(creds, userName, targetFolder) {
   if (!userName) { 
     console.log("No userName given")
     return
   }
 
-  getStoryUrls().then(stories => {
-    console.log("number of users:", Object.values(stories).length)
+  return new Promise((resolve, reject) => {
+    getStoryUrls(creds).then(storiesByUser => {
+      const storyItems = storiesByUser[userName]
+      if(!storyItems) { 
+        console.log("No matching user for: " + userName)
+        return
+      }
 
-    const selected = stories[userName]
-    if(!selected) { 
-      console.log("No matching user for: " + userName)
-      return
-    }
-    console.log("found user:")
-    console.log(selected)
-
-    selected.forEach(item => {
-      downloadItem(userName, item)
+      const padNum = String(storyItems.length).length
+      let index = 1
+      storyItems.forEach(item => {
+        downloadItem(userName, item, targetFolder).then(res => {
+          console.log(`${printProgressBar(index, storyItems.length)}: ${res.fileName}`)
+          if (index === storyItems.length) resolve()
+          index++
+        })
+      })
     })
   })
+  
 }
 
-export const downloadAll = function() {
-  getStoryUrls().then(storiesByUser => {
-    console.log("number of users:", Object.values(storiesByUser).length)
+const printProgressNum = function(index, length) {
+  return `[${index.pad(3,' ')}/${length.pad(3, ' ')}]`
+}
 
-    Object.entries(storiesByUser).forEach(story => {
-      const user = story[0]
-      const stories = story[1]
+const printProgressBar = function(index, length) {
+  return '['.padEnd(index+1, '=') + ']'.padStart(length-index+1, '-')
+}
 
-      console.log(`downloading: ${user} [0/${stories.length}]`)
-      stories.forEach((item, index) => {
-        downloadItem(user, item)
-        console.log(`downloading: ${user} [${index+1}/${stories.length}]`)
+export const downloadAll = function(creds, targetFolder) {
+  return new Promise((resolve, reject) => {
+    let userDone = 0
+    getStoryUrls(creds).then(storiesByUser => {
+      const userCount = Object.values(storiesByUser).length
+      console.log("number of users with stories:", userCount)
+
+      const padName = Object.keys(storiesByUser).reduce((max, name) => name.length > max ? name.length : max, 0)
+      console.log(padName)
+
+      Object.entries(storiesByUser).forEach(stories => {
+        const user = stories[0]
+        const storyItems = stories[1]
+
+        let index = 1
+        storyItems.forEach(item => {
+          downloadItem(user, item, targetFolder).then(res => {
+            console.log(`${res.skipped ? 'skipped   ' : 'downloaded'}: ${user.padEnd(padName, ' ')} ${printProgressBar(index, storyItems.length)}`)
+            
+            if (index === storyItems.length) userDone++
+            if (userDone === userCount) resolve()
+            
+            index++
+          })
+        })
       })
+
     })
   })
 }
