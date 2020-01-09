@@ -4,30 +4,32 @@ import formData from 'form-data'
 
 export default class Instagram {
 
-  constructor(csrfToken, sessionId) {
-    this.csrfToken = csrfToken
-    this.sessionId = sessionId
-    this.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
+  constructor(serialObj) {
+    if (serialObj) {
+      this.csrfToken = serialObj.csrfToken
+      this.sessionId = serialObj.sessionId
+      this.essentialValues = serialObj.essentialValues
+    } else {
+      this.csrfToken = undefined
+      this.sessionId = undefined
+
+      this.essentialValues =  {
+        sessionid   : undefined,
+        ds_user_id  : undefined,
+        csrftoken   : undefined,
+        shbid       : undefined,
+        rur         : undefined,
+        mid         : undefined,
+        shbts       : undefined,
+        mcd         : undefined,
+        ig_cb       : 1,
+        //urlgen      : undefined //this needs to be filled in according to my RE
+      }
+    }
+
+    this.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'
     this.userIdFollowers = {}
     this.userIdFollows = {}
-    this.timeoutForCounter = 300
-    this.timeoutForCounterValue = 30000
-    this.paginationDelay = 30000
-    this.receivePromises = {}
-    this.searchTypes = ['location', 'hashtag']
-
-    this.essentialValues = {
-      sessionid   : undefined,
-      ds_user_id  : undefined,
-      csrftoken   : undefined,
-      shbid       : undefined,
-      rur         : undefined,
-      mid         : undefined,
-      shbts       : undefined,
-      mcd         : undefined,
-      ig_cb       : 1,
-      //urlgen      : undefined //this needs to be filled in according to my RE
-    }
 
     this.baseHeader = {
       'accept-langauge': 'en-US;q=0.9,en;q=0.8,es;q=0.7',
@@ -58,6 +60,57 @@ export default class Instagram {
 
   combineWithBaseHeader(data){
     return Object.assign({ ...this.baseHeader }, data)
+  }
+
+  getCsrfToken() {
+    return fetch('https://www.instagram.com',{
+      method: 'get',
+      headers: this.combineWithBaseHeader({
+        'accept': 'text/html,application/xhtml+xml,application/xml;q0.9,image/webp,image/apng,*.*;q=0.8',
+        'accept-encoding': 'gzip, deflate, br',
+        'cookie': this.generateCookie(true)
+      })
+    }).then(res => {
+      this.updateEssentialValues(res.headers._headers['set-cookie'])
+      return res.text()
+    }).then(html => {
+      this.updateEssentialValues(html, true)
+      return this.essentialValues.csrftoken
+    }).catch((e) =>
+      console.log('Failed to get instagram csrf token\n', e)
+    )
+  }
+
+  auth({ username, password }) {
+    const formdata = 'username=' + username + '&password=' + password + '&queryParams=%7B%7D'
+
+    const options = {
+      method  : 'post',
+      body    : formdata,
+      headers : this.combineWithBaseHeader({
+        'accept'            : '*/*',
+        'accept-encoding'   : 'gzip, deflate, br',
+        'content-length'    : formdata.length,
+        'content-type'      : 'application/x-www-form-urlencoded',
+        'cookie'            : 'ig_cb=' + this.essentialValues.ig_cb,
+        'x-csrftoken'       : this.csrfToken,
+        'x-instagram-ajax'  : this.rollout_hash,
+        'x-requested-with'  : 'XMLHttpRequest',
+      })
+    }
+
+    return fetch('https://www.instagram.com/accounts/login/ajax/', options)
+      .then(res => {
+        this.updateEssentialValues(res.headers._headers['set-cookie'])
+        return this.essentialValues.sessionid;
+      }).catch((e) =>
+        console.log('Instagram authentication failed (challenge required error):\n', e)
+      )
+  }
+
+  async login(credentials) {
+    this.csrfToken = await this.getCsrfToken()
+    this.sessionId = await this.auth(credentials)
   }
 
   updateEssentialValues(src, isHTML){
@@ -95,14 +148,11 @@ export default class Instagram {
   getUserDataByUsername(username) {
     const fetch_data = {
       method: 'get',
-      headers:
-        this.combineWithBaseHeader(
-          {
-            'accept': 'text/html,application/xhtml+xml,application/xml;q0.9,image/webp,image/apng,*.*;q=0.8',
-            'accept-encoding': 'gzip, deflate, br',
-            'cookie': this.generateCookie()
-          }
-        )
+      headers: this.combineWithBaseHeader({
+        'accept': 'text/html,application/xhtml+xml,application/xml;q0.9,image/webp,image/apng,*.*;q=0.8',
+        'accept-encoding': 'gzip, deflate, br',
+        'cookie': this.generateCookie()
+      })
     }
     
     return fetch('https://www.instagram.com/' + username, fetch_data)
@@ -201,52 +251,6 @@ export default class Instagram {
 
     this.userIdFollowers[userId] = followers.map(u => u.node)
     return this.userIdFollowers[userId]
-  }
-
-  getCsrfToken() {
-    return fetch('https://www.instagram.com',{
-      method: 'get',
-      headers: this.combineWithBaseHeader({
-        'accept': 'text/html,application/xhtml+xml,application/xml;q0.9,image/webp,image/apng,*.*;q=0.8',
-        'accept-encoding': 'gzip, deflate, br',
-        'cookie': this.generateCookie(true)
-      })
-    }).then(res => {
-      this.updateEssentialValues(res.headers._headers['set-cookie'])
-      return res.text()
-    }).then(html => {
-      this.updateEssentialValues(html, true)
-      return this.essentialValues.csrftoken
-    }).catch((e) =>
-      console.log('Failed to get instagram csrf token\n', e)
-    )
-  }
-
-  auth({ username, password }) {
-    const formdata = 'username=' + username + '&password=' + password + '&queryParams=%7B%7D'
-
-    const options = {
-      method  : 'post',
-      body    : formdata,
-      headers : this.combineWithBaseHeader({
-        'accept'            : '*/*',
-        'accept-encoding'   : 'gzip, deflate, br',
-        'content-length'    : formdata.length,
-        'content-type'      : 'application/x-www-form-urlencoded',
-        'cookie'            : 'ig_cb=' + this.essentialValues.ig_cb,
-        'x-csrftoken'       : this.csrfToken,
-        'x-instagram-ajax'  : this.rollout_hash,
-        'x-requested-with'  : 'XMLHttpRequest',
-      })
-    }
-
-    return fetch('https://www.instagram.com/accounts/login/ajax/', options)
-      .then(res => {
-        this.updateEssentialValues(res.headers._headers['set-cookie'])
-        return this.essentialValues.sessionid;
-      }).catch((e) =>
-        console.log('Instagram authentication failed (challenge required error):\n', e)
-      )
   }
 
   getHeaders() {
