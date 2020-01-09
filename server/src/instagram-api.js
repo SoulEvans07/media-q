@@ -1,14 +1,32 @@
 /* based on https://github.com/yatsenkolesh/instagram-nodejs */
 import fetch from 'node-fetch'
+import qs from 'qs'
 import formData from 'form-data'
+
+const axios = function(url, options) {
+  return _axios({ url, ...options })
+}
+
+const searchCookie = function(cookies, key) {
+  let pattern = `${key}=\\S*;`
+  let match = cookies.match(new RegExp(pattern))
+  if (match) {
+    match = match[0]
+    match = match.substring(key.length+1)
+    match = match.substring(0, match.length - 1)
+    return match
+  }
+}
 
 export default class Instagram {
 
   constructor(serialObj) {
     if (serialObj) {
+      this.username = serialObj.username
       this.csrfToken = serialObj.csrfToken
       this.sessionId = serialObj.sessionId
       this.essentialValues = serialObj.essentialValues
+      this.rollout_hash = serialObj.rollout_hash
     } else {
       this.csrfToken = undefined
       this.sessionId = undefined
@@ -25,6 +43,8 @@ export default class Instagram {
         ig_cb       : 1,
         //urlgen      : undefined //this needs to be filled in according to my RE
       }
+
+      this.rollout_hash = undefined
     }
 
     this.userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36'
@@ -63,7 +83,7 @@ export default class Instagram {
   }
 
   getCsrfToken() {
-    return fetch('https://www.instagram.com',{
+    return fetch('https://www.instagram.com', {
       method: 'get',
       headers: this.combineWithBaseHeader({
         'accept': 'text/html,application/xhtml+xml,application/xml;q0.9,image/webp,image/apng,*.*;q=0.8',
@@ -71,7 +91,7 @@ export default class Instagram {
         'cookie': this.generateCookie(true)
       })
     }).then(res => {
-      this.updateEssentialValues(res.headers._headers['set-cookie'])
+      this.updateEssentialValues(res.headers._headers['set-cookie'].join(';'))
       return res.text()
     }).then(html => {
       this.updateEssentialValues(html, true)
@@ -82,8 +102,9 @@ export default class Instagram {
   }
 
   auth({ username, password }) {
-    const formdata = 'username=' + username + '&password=' + password + '&queryParams=%7B%7D'
+    this.username = username
 
+    const formdata = qs.stringify({ username, password, queryParams: {} })
     const options = {
       method  : 'post',
       body    : formdata,
@@ -101,8 +122,8 @@ export default class Instagram {
 
     return fetch('https://www.instagram.com/accounts/login/ajax/', options)
       .then(res => {
-        this.updateEssentialValues(res.headers._headers['set-cookie'])
-        return this.essentialValues.sessionid;
+        this.updateEssentialValues(res.headers._headers['set-cookie'].join(';'))
+        return this.essentialValues.sessionid
       }).catch((e) =>
         console.log('Instagram authentication failed (challenge required error):\n', e)
       )
@@ -110,39 +131,35 @@ export default class Instagram {
 
   async login(credentials) {
     this.csrfToken = await this.getCsrfToken()
+    console.log(this.csrfToken)
     this.sessionId = await this.auth(credentials)
+    console.log(this.sessionId)
   }
 
   updateEssentialValues(src, isHTML){
     if (!isHTML){
       const keys = Object.keys(this.essentialValues)
 
-        for (let i = 0; i < keys.length; i++){
-          let key = keys[i];
-          if (!this.essentialValues[key]){
-            for (let cookie in src){
-              if (src[cookie].includes(key) && !src[cookie].includes(key + '=""')){
-                let cookieValue = src[cookie].split(';')[0].replace(key + '=', '')
-                this.essentialValues[key] = cookieValue
-                break
-              }
-            }
-          }
+      keys.forEach(key => {
+        if (!this.essentialValues[key]) {
+          const value = searchCookie(src, key)
+          this.essentialValues[key] = value !== '""' ? value : undefined
         }
-      } else {
-        let subStr = src
+      })
+    } else {
+      let subStr = src
 
-        const startStr = '<script type="text/javascript">window._sharedData = '
-        let start = subStr.indexOf(startStr) + startStr.length
-        subStr = subStr.substr(start, subStr.length)
-        
-        subStr = subStr.substr(0, subStr.indexOf('</script>') - 1)
+      const startStr = '<script type="text/javascript">window._sharedData = '
+      let start = subStr.indexOf(startStr) + startStr.length
+      subStr = subStr.substr(start, subStr.length)
+      
+      subStr = subStr.substr(0, subStr.indexOf('</script>') - 1)
 
-        const json = JSON.parse(subStr)
+      const json = JSON.parse(subStr)
 
-        this.essentialValues.csrftoken = json.config.csrf_token;
-        this.rollout_hash = json.rollout_hash
-      }
+      this.essentialValues.csrftoken = json.config.csrf_token;
+      this.rollout_hash = json.rollout_hash
+    }
   }
 
   getUserDataByUsername(username) {
@@ -253,42 +270,44 @@ export default class Instagram {
     return this.userIdFollowers[userId]
   }
 
-  getHeaders() {
+  getDefaultHeaders() {
     return {
-      'referer': 'https://www.instagram.com/p/BT1ynUvhvaR/?taken-by=yatsenkolesh',
+      'referer': 'https://www.instagram.com', 
       'origin': 'https://www.instagram.com',
       'user-agent': this.userAgent,
       'x-instagram-ajax': '1',
       'x-requested-with': 'XMLHttpRequest',
       'x-csrftoken': this.csrfToken,
-      cookie: ' sessionid=' + this.sessionId + '; csrftoken=' + this.csrfToken + ';'
+      'cookie': this.generateCookie()
     }
   }
 
   follow(userId) {
     return fetch('https://www.instagram.com/web/friendships/' + userId + '/follow', {
       method: 'post',
-      headers: this.getHeaders()
+      headers: this.getDefaultHeaders()
     })
   }
 
   unfollow(userId) {
     return fetch('https://www.instagram.com/web/friendships/' + userId + '/unfollow', {
       method: 'post',
-      headers: this.getHeaders()
+      headers: this.getDefaultHeaders()
     })
   }
 
   getUserDataById(id) {
     let query = 'ig_user(' + id + '){id,username,external_url,full_name,profile_pic_url,biography,followed_by{count},follows{count},media{count},is_private,is_verified}'
 
-    let form = new formData();
+    let form = new formData()
     form.append('q', query)
 
     return fetch('https://www.instagram.com/query/', {
       method: 'post',
       body: form,
-      headers: this.getHeaders()
+      headers: this.getDefaultHeaders()
     }).then(res => res.json())
   }
 }
+
+
