@@ -7,7 +7,7 @@ dotenv.config({
   allowEmptyValues: true
 });
 
-export const instagram = {
+export const instagram_cred = {
   username: process.env.INSTA_USERNAME,
   password: process.env.INSTA_PASSWORD
 }

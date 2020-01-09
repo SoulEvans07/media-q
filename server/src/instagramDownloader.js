@@ -1,6 +1,7 @@
 import fs from 'fs'
 import axios from 'axios'
 import request from 'request'
+import fetch from 'node-fetch'
 
 const storyUserReqVariables = {
   only_stories: true,
@@ -13,14 +14,14 @@ const storyUserReqUrl = 'https://www.instagram.com/graphql/query/' +
   '&variables=' + JSON.stringify(storyUserReqVariables)
 
 
-export const getStoryUrls = function(cookie) {
+export const getStoryUrls = function(cookies) {
   return new Promise((resolve, reject) => {
     axios({
       url: storyUserReqUrl,
       method: 'GET',
       headers: {
         accept: 'application/json',
-        cookie: cookie
+        cookie: cookies
       }
     }).then(res => res.data).then(res => {
       const storyNodes = res.data.user.feed_reels_tray.edge_reels_tray_to_reel.edges
@@ -54,7 +55,7 @@ export const getStoryUrls = function(cookie) {
         method: 'GET',
         headers: {
           accept: 'application/json',
-          cookie: cookie
+          cookie: cookies
         }
       }).then(res => res.data).then(response => {
         const reelsMedia = response.data.reels_media
@@ -146,14 +147,14 @@ const downloadItem = function(user, item, targetFolder) {
   })
 }
 
-export const downloadAllOf = function(creds, userName, targetFolder) {
+export const downloadAllOf = function(cookies, userName, targetFolder) {
   if (!userName) { 
     console.log("No userName given")
     return
   }
 
   return new Promise((resolve, reject) => {
-    getStoryUrls(creds).then(storiesByUser => {
+    getStoryUrls(cookies).then(storiesByUser => {
       const storyItems = storiesByUser[userName]
       if(!storyItems) { 
         console.log("No matching user for: " + userName)
@@ -182,10 +183,10 @@ const printProgressBar = function(index, length) {
   return '['.padEnd(index+1, '=') + ']'.padStart(length-index+1, '-')
 }
 
-export const downloadAll = function(creds, targetFolder) {
+export const downloadAll = function(cookies, targetFolder) {
   return new Promise((resolve, reject) => {
     let userDone = 0
-    getStoryUrls(creds).then(storiesByUser => {
+    getStoryUrls(cookies).then(storiesByUser => {
       const userCount = Object.values(storiesByUser).length
       console.log("number of users with stories:", userCount)
 
@@ -210,5 +211,82 @@ export const downloadAll = function(creds, targetFolder) {
       })
 
     })
+  })
+}
+
+export const getFollowedUsers = async function(cookies, user_id) {
+  let follows = []
+  let has_next = true
+  let after = ''
+
+  if (!user_id) {
+    user_id = cookies.match(/ds_user_id=\d*/)[0].substring('ds_user_id='.length)
+  }
+
+  while(has_next) {
+    const requestVariables = {
+      id: user_id,
+      include_reel: false,
+      fetch_mutual: false,
+      first: 50,
+      after
+    }
+
+    const requestUrl = 'https://www.instagram.com/graphql/query/?query_hash=d04b0a864b4b54837c0d870b0e77e076' +
+      '&variables=' + JSON.stringify(requestVariables)
+
+    const response = await axios({
+      url: requestUrl,
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        cookie: cookies
+      }
+    }).then(res => res.data)
+    
+    const edge_follow = response.data.user.edge_follow
+    follows = follows.concat(edge_follow.edges)
+    has_next = edge_follow.page_info.has_next_page
+    after = edge_follow.page_info.end_cursor
+  }
+
+  return follows.map(u => u.node)
+}
+
+
+export const followUser = function(cookies, user_id) {
+  return new Promise((resolve, reject) => {
+    cookies = 'ig_cb=1; rur=ATN; ig_did=A282538E-FE49-495F-926A-20A68223CF80; mid=XhaCOwAEAAHO65G4iwf0paHIn7sY; ds_user_id=28080608909; csrftoken=9AXqNrwjAwja45BUKNY8kloKjDhxlbgB; sessionid=28080608909%3Al2WWA283UoFsjf%3A18;'
+    const requestUrl = `https://www.instagram.com/web/friendships/${user_id}/follow/`
+    
+    let csrfToken = cookies.match(/csrftoken=\S*/)[0]
+    csrfToken = csrfToken.substring('csrftoken='.length, csrfToken.length-1)
+    
+    let sessionId = cookies.match(/sessionid=\S*/)[0]
+    sessionId = sessionId.substring('sessionid='.length, sessionId.length-1)
+    
+
+    const headers = {
+      'referer': 'https://www.instagram.com/',
+      'origin': 'https://www.instagram.com',
+      'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.117 Safari/537.36',
+      'x-instagram-ajax': '1',
+      'x-requested-with': 'XMLHttpRequest',
+      'x-csrftoken': csrfToken,
+      cookie: 'sessionid=' + sessionId + '; csrftoken=' + csrfToken + ';'
+    }
+    console.log(headers)
+
+    fetch(requestUrl, {
+      'method': 'post',
+      'headers': headers
+    }).then(res => resolve(res)).catch(e => reject(e))
+/*
+    axios({
+      url: requestUrl,
+      method: 'POST',
+      headers
+    }).then(res => resolve(res)).catch(e => reject(e))
+*/
   })
 }
