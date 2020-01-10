@@ -1,24 +1,12 @@
 /* based on https://github.com/yatsenkolesh/instagram-nodejs */
 import fetch from 'node-fetch'
-import qs from 'qs'
 import formData from 'form-data'
+import qs from 'qs'
+import fs from 'fs'
 
-const axios = function(url, options) {
-  return _axios({ url, ...options })
-}
+import { searchCookie, downloadFile, getTimestampString } from './helpers'
 
-const searchCookie = function(cookies, key) {
-  let pattern = `${key}=\\S*;`
-  let match = cookies.match(new RegExp(pattern))
-  if (match) {
-    match = match[0]
-    match = match.substring(key.length+1)
-    match = match.substring(0, match.length - 1)
-    return match
-  }
-}
-
-export default class Instagram {
+export class Instagram {
 
   constructor(serialObj) {
     if (serialObj) {
@@ -131,9 +119,10 @@ export default class Instagram {
 
   async login(credentials) {
     this.csrfToken = await this.getCsrfToken()
-    console.log(this.csrfToken)
+    console.log('csrfToken:', this.csrfToken)
+    
     this.sessionId = await this.auth(credentials)
-    console.log(this.sessionId)
+    console.log('sessionId:', this.sessionId)
   }
 
   updateEssentialValues(src, isHTML){
@@ -186,8 +175,12 @@ export default class Instagram {
       }))
   }
 
-  isPrivate(username) {
+  isUserPrivate(username) {
     return this.getUserDataByUsername(username).then(data => data.user.is_private)
+  }
+
+  isUserIdPrivate(id) {
+    return this.getUserDataById(id).then(data => data.user.is_private)
   }
 
   async getFollowedUsers(userId) {
@@ -283,14 +276,16 @@ export default class Instagram {
   }
 
   follow(userId) {
-    return fetch('https://www.instagram.com/web/friendships/' + userId + '/follow', {
+    const requestUrl = `https://www.instagram.com/web/friendships/${userId}/follow`
+    return fetch(requestUrl, {
       method: 'post',
       headers: this.getDefaultHeaders()
     })
   }
 
   unfollow(userId) {
-    return fetch('https://www.instagram.com/web/friendships/' + userId + '/unfollow', {
+    const requestUrl = `https://www.instagram.com/web/friendships/${userId}/unfollow`
+    return fetch(requestUrl, {
       method: 'post',
       headers: this.getDefaultHeaders()
     })
@@ -308,6 +303,177 @@ export default class Instagram {
       headers: this.getDefaultHeaders()
     }).then(res => res.json())
   }
+
+  getStoryUrls() {
+    const storyUserReqVariables = {
+      only_stories: true,
+      stories_prefetch: false,
+      stories_video_dash_manifest: false
+    }
+
+    const storyUserReqUrl = 'https://www.instagram.com/graphql/query/' +
+      '?query_hash=5ff0ea71b469b0c684df3e608a5af0b3' +
+      '&variables=' + JSON.stringify(storyUserReqVariables)
+
+    const headers = {
+      'accept': 'application/json',
+      'referer': 'https://www.instagram.com', 
+      'origin': 'https://www.instagram.com',
+      'user-agent': this.userAgent,
+      'x-instagram-ajax': '1',
+      'x-requested-with': 'XMLHttpRequest',
+      'x-csrftoken': this.csrfToken,
+      'cookie': this.generateCookie()
+    }
+
+    return new Promise((resolve, reject) => {
+      fetch(storyUserReqUrl, {
+        method: 'get',
+        headers: headers
+      }).then(res => res.json()).then(res => {
+        const storyNodes = res.data.user.feed_reels_tray.edge_reels_tray_to_reel.edges
+        const users = []
+
+        storyNodes.forEach(storyNode => {
+          const userName = storyNode.node.user.username
+          const userId = storyNode.node.user.id
+          
+          users.push(userId)
+        })
+
+        const storyReqVariables = {
+          reel_ids: users,
+          tag_names: [],
+          location_ids: [],
+          highlight_reel_ids: [],
+          precomposed_overlay: false,
+          show_story_viewer_list: true,
+          story_viewer_fetch_count: 50,
+          story_viewer_cursor: "",
+          stories_video_dash_manifest: false
+        }
+
+        const storyReqUrl = 'https://www.instagram.com/graphql/query/' +
+          '?query_hash=52a36e788a02a3c612742ed5146f1676'+ 
+          '&variables=' + JSON.stringify(storyReqVariables)
+        
+        fetch(storyReqUrl, {
+          url: storyReqUrl,
+          method: 'get',
+          headers: headers
+        }).then(res => res.json()).then(response => {
+          const reelsMedia = response.data.reels_media
+          const stories = {}
+
+          if(!reelsMedia) {
+            console.log(response)
+          }
+
+          reelsMedia.forEach(media => {
+            const userName = media.user.username
+            const items = media.items
+
+            stories[userName] = items.map(item => {
+              const display_resources = item.display_resources
+
+              if (item.is_video) {
+                const video_resources = item.video_resources
+
+                return {
+                  timestamp: item.taken_at_timestamp,
+                  is_video: true,
+                  has_audio: item.has_audio,
+                  thumbnail: display_resources[0].src,
+                  video: video_resources[video_resources.length-1].src
+                }
+              } else {
+                return {
+                  timestamp: item.taken_at_timestamp,
+                  is_video: false,
+                  thumbnail: display_resources[0].src,
+                  image: display_resources[display_resources.length-1].src
+                }
+              }
+            })
+          })
+
+          resolve(stories)
+        }).catch(err => reject(err))
+      }).catch(err => reject(err))
+    })
+  }
+
+  downloadStoryItem(username, item, targetFolder) {
+    return new Promise((resolve, reject) => {
+      let src = null
+      let fileName = null
+      const datetime = new Date(item.timestamp * 1000)
+
+      if (item.is_video) {
+        src = item.video
+        fileName = username + '-' + getTimestampString(datetime) + '.mp4'
+      } else {
+        src = item.image
+        fileName = username + '-' + getTimestampString(datetime) + '.jpg'
+      }
+
+      if (src) {
+        const filePath = targetFolder + fileName
+        try {
+          if (fs.existsSync(filePath)){
+            resolve({ fileName, skipped: true })
+          } else {
+            downloadFile(src, filePath).then(() => resolve({ fileName, skipped: false }))
+          }
+        } catch(e) {
+          reject(e)
+        }
+      }
+    })
+  }
 }
 
+
+const readSessionFile = function(sessionFilePath) {
+  if (fs.existsSync(sessionFilePath)) {
+    console.log('[read]')
+    const content = fs.readFileSync(sessionFilePath)
+    try {
+      const session = JSON.parse(content)
+      return session
+    } catch (e) {
+      return null
+    }
+  } else {
+    return null
+  }
+}
+
+const writeSessionFile = function(instance, sessionFilePath) {
+  const session = {
+    username: instance.username,
+    csrfToken: instance.csrfToken,
+    sessionId: instance.sessionId,
+    essentialValues: instance.essentialValues,
+    rollout_hash: instance.rollout_hash
+  }
+  console.log('[write]', session.username)
+  fs.writeFileSync(sessionFilePath, JSON.stringify(session))
+}
+
+export const createInstance = async function(credentials, sessionFilePath) {
+  const sessionObject = readSessionFile(sessionFilePath)
+  const instagram = new Instagram(sessionObject && credentials.username === sessionObject.username ? sessionObject : null)
+
+  if (!instagram.sessionId) {
+    console.log('[login]', credentials.username)
+    await instagram.login(credentials)
+
+    if (instagram.sessionId) {
+      writeSessionFile(instagram, sessionFilePath)
+    }
+  }
+
+  return instagram
+}
 
