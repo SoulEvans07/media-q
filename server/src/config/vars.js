@@ -11,3 +11,8 @@ export const instagram_cred = {
   username: process.env.INSTA_USERNAME,
   password: process.env.INSTA_PASSWORD
 }
+
+export const mail_cred = {
+  username: process.env.GMAIL_USERNAME,
+  password: process.env.GMAIL_APP_PASSWORD
+}

@@ -36,9 +36,11 @@
     "morgan": "^1.9.1",
     "node-cron": "^2.0.3",
     "node-fetch": "1.7.3",
+    "nodemailer": "^6.4.2",
     "qs": "^6.9.1",
     "request": "^2.88.0",
-    "require-all": "^3.0.0"
+    "require-all": "^3.0.0",
+    "smtp-server": "^3.5.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0",

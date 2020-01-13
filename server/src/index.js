@@ -2,61 +2,24 @@ import fs from 'fs'
 import cron from 'node-cron'
 import checkDiskSpace from 'check-disk-space'
 import getSize from 'get-folder-size'
-import * as Instagram from './instagram-api'
 
+import * as mailHelper from './mail-helper'
+import * as Instagram from './instagram-api'
 import { instagram_cred } from './config/vars'
 import { downloadAll } from './instagramDownloader'
 
 Number.prototype.pad = function(length, char = '0') { return String(this).padStart(length, char) }
+
+String.prototype.replaceAll = function (find, replace) {
+  const escaped_find = find.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  return this.replace(new RegExp(escaped_find, 'g'), replace);
+}
 
 const targetFolder = __dirname + '/../target/'
 const instagramFolder = targetFolder + 'instagram/'
 const downloadFolder = instagramFolder + 'stories/'
 const sessionFile = targetFolder + 'instagram/.session'
 
-const followAll = async function() {
-  const instagram = await Instagram.createInstance(instagram_cred, sessionFile)
-
-  //let followed_users = await instagram.getFollowedUsers(175081363)
-  //let private_users = followed_users.filter(u => u.is_private)
-  //let public_users = followed_users.filter(u => !u.is_private)
-  //private_users = private_users.map(u => ({ username: u.username, id: u.id }))
-  //public_users = public_users.map(u => ({ username: u.username, id: u.id }))
-
-  //fs.writeFileSync(instagramFolder + 'private_users.json', JSON.stringify(private_users))
-  //fs.writeFileSync(instagramFolder + 'public_users.json', JSON.stringify(public_users))
-
-  const to_follow = JSON.parse(fs.readFileSync(instagramFolder + 'public_users.json'))
-  const first_few = to_follow.slice(0, 10)
-
-  const successfull = []
-  const failed = []
-  try {
-    first_few.forEach(async (user, i) => {
-      console.log('tried    :', user.username)
-      setTimeout(() => {
-        instagram.follow(user.id).then(res => {
-          console.log('followed :', user.username, res.status, res.statusText)
-          
-          if (res.status == 200) {
-            successfull.push(user)
-          } else {
-            failed.push(user)
-          }
-        }).catch(e => {
-          console.log('failed   :', user.username, res.status, res.statusText)
-          failed.push(user)
-        }).then(() => {
-          if (successfull.length + failed.length === first_few.length) {
-            console.log('Done.')
-            fs.writeFileSync(instagramFolder + 'successfull.json', JSON.stringify(successfull))
-            fs.writeFileSync(instagramFolder + 'failed.json', JSON.stringify(failed))
-          }
-        })
-      }, i * 1000)
-    })
-  } catch(e) { console.log(e) }
-}
 
 const getFileSize = function(path) {
   return new Promise((resolve, reject) => {
@@ -99,7 +62,28 @@ const main = async function() {
   })
 }
 
+/*
 cron.schedule('7,9,11 * * * *', () => {
   console.log(new Date().toLocaleTimeString())
   main()
 })
+*/
+
+//main()
+
+
+
+let mailOptions = {
+  from: 'Media-Q',
+  to: 'szi.adam@simonyi.bme.hu',
+  subject: 'MediaQ ✔',
+  html: '<b>Hello world?</b>'
+}
+
+mailHelper.sendMail(mailOptions, (error, info) => {
+    if (error) {
+        return console.log(error);
+    }
+    console.log('Message sent: %s', info.messageId)
+})
+
