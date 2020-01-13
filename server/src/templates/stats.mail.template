@@ -1,0 +1,57 @@
+<h1>Media-Q Report {{ time }}</h1>
+
+<table>
+	<th colspan="3" style="text-align: left">Disk status</th>
+	<tr>
+		<td colspan="3" style="text-align: left; font-weight: bold">before</td>
+	<tr>
+	<tr>
+		<td>free</td>
+		<td style="text-align: right">{{ before.free.mb }} MB</td>
+		<td style="text-align: right">{{ before.free.perc }} %</td>
+	</tr>
+	<tr>
+		<td>instagram</td>
+		<td style="text-align: right">{{ before.insta.mb }} MB</td>
+		<td style="text-align: right">{{ before.insta.perc }} %</td>
+	</tr>
+	<tr>
+		<td>other</td>
+		<td style="text-align: right">{{ before.other.mb }} MB</td>
+		<td style="text-align: right">{{ before.other.perc }} %</td>
+	</tr>
+	<tr>
+		<td colspan="3" style="text-align: left; font-weight: bold">after</td>
+	</tr>
+	<tr>
+		<td>free</td>
+		<td style="text-align: right">{{ after.free.mb }} MB</td>
+		<td style="text-align: right">{{ after.free.perc }} %</td>
+	</tr>
+	<tr>
+		<td>instagram</td>
+		<td style="text-align: right">{{ after.insta.mb }} MB</td>
+		<td style="text-align: right">{{ after.insta.perc }} %</td>
+	</tr>
+	<tr>
+		<td>other</td>
+		<td style="text-align: right">{{ after.other.mb }} MB</td>
+		<td style="text-align: right">{{ after.other.perc }} %</td>
+	</tr>
+</table>
+
+<table>
+	<th colspan="3" style="text-align: left">Downloads</th>
+	{{ #downloads.count }}
+	{{ #downloads.users }}
+	<tr>
+		<td>{{ username }}</td>
+		<td style="text-align: right">{{ count }}</td>
+	</tr>
+	{{ /downloads.users }}
+	{{ /downloads.count }}
+	<tr>
+		<td style="text-align: left; font-weight: bold">sum:</td>
+		<td style="text-align: left; font-weight: bold">{{ downloads.count }}</td>
+	<tr>
+</table>

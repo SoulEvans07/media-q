@@ -1,17 +1,18 @@
-const printProgressNum = function(index, length) {
+export const printProgressNum = function(index, length) {
   return `[${index.pad(3,' ')}/${length.pad(3, ' ')}]`
 }
 
-const printProgressBar = function(index, length) {
+export const printProgressBar = function(index, length) {
   return '['.padEnd(index+1, '=') + ']'.padStart(length-index+1, '-')
 }
 
-export const downloadAll = function(instance, targetFolder) {
+export const downloadAll = function(instance, targetFolder, logger) {
   return new Promise((resolve, reject) => {
     let userDone = 0
     instance.getStoryUrls().then(storiesByUser => {
       const userCount = Object.values(storiesByUser).length
       console.log("number of users with stories:", userCount)
+      const stats = { count: 0, users: {} }
 
       const padName = Object.keys(storiesByUser).reduce((max, name) => name.length > max ? name.length : max, 0)
 
@@ -22,10 +23,13 @@ export const downloadAll = function(instance, targetFolder) {
         let index = 1
         storyItems.forEach(item => {
           instance.downloadStoryItem(user, item, targetFolder).then(res => {
-            console.log(`${res.skipped ? 'skipped   ' : 'downloaded'}: ${user.padEnd(padName, ' ')} ${printProgressBar(index, storyItems.length)}`)
+            if (logger) logger(user.padEnd(padName, ' '), index, storyItems.length, res.skipped)
+
+            if (!res.skipped && stats.users[user]) { stats.users[user]++; stats.count++; }
+            if (!res.skipped && !stats.users[user]) { stats.users[user] = 1; stats.count++; }
             
             if (index === storyItems.length) userDone++
-            if (userDone === userCount) resolve()
+            if (userDone === userCount) resolve(stats)
             
             index++
           })
