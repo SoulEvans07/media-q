@@ -1,24 +1,19 @@
-import React from 'react';
-import './App.css';
+import React, { Component } from 'react'
+import './App.scss'
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.jsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import InstaView from './views/InstaView'
+import NavBar from './components/NavBar'
+
+class App extends Component {
+
+  render() {
+    return (
+      <div className="app">
+        <NavBar />
+        <InstaView />
+      </div>
+    )
+  }
 }
 
-export default App;
+export default App
