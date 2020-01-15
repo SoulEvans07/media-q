@@ -5,15 +5,20 @@ import { AllHtmlEntities as entities } from 'html-entities'
 import { storiesFolder } from '../config/vars'
 
 const getStory = async function(req, res, next) {
-  const date = req.params.filename.match(/\d{4}-\d{2}-\d{2}/)[0]
-  const filePath = path.join(storiesFolder, date, req.params.filename)
+  const fileName = req.params.filename
+  const date = fileName.match(/\d{4}-\d{2}-\d{2}/)[0]
+  const filePath = path.join(storiesFolder, date, fileName)
 
-  try {
-    const base64_encoded = fs.readFileSync(filePath, { encoding: 'base64' })
-    res.status(200).send("data:image/png;base64, " + base64_encoded)
-  } catch (e) {
-    console.log(e)
-    res.status(500).send(e.message)
+  if (fileName.endsWith('.jpg')) {
+    try {
+      const base64_encoded = fs.readFileSync(filePath, { encoding: 'base64' })
+      return res.status(200).send("data:image/png;base64, " + base64_encoded)
+    } catch (e) {
+      console.log(e)
+      return res.status(500).send(e.message)
+    }
+  } else if (fileName.endsWith('.mp4')) {
+    return res.sendFile(filePath)
   }
 }
 
