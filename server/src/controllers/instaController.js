@@ -1,15 +1,19 @@
+import fs from 'fs'
+import path from 'path'
 import { AllHtmlEntities as entities } from 'html-entities'
 
-import { instagramFolder } from '../config/vars'
+import { storiesFolder } from '../config/vars'
 
-export const getStory = async function(req, res, next) {
-  const filePath = instagramFolder + req.params.id
+const getStory = async function(req, res, next) {
+  const date = req.params.filename.match(/\d{4}-\d{2}-\d{2}/)[0]
+  const filePath = path.join(storiesFolder, date, req.params.filename)
 
   try {
-    const bitmap = fs.readFileSync(filePath)
-    res.status(200).send(bitmap)
+    const base64_encoded = fs.readFileSync(filePath, { encoding: 'base64' })
+    res.status(200).send("data:image/png;base64, " + base64_encoded)
   } catch (e) {
-    res.status(500).send(e)
+    console.log(e)
+    res.status(500).send(e.message)
   }
 }
 

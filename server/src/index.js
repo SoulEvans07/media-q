@@ -1,5 +1,5 @@
-import main from './main'
+//import main from './main'
 import { port, env } from './config/vars'
-//import server from './config/express'
+import server from './config/express'
 
-//server.listen(port, () => console.log('App running on: localhost:' + port + ' env: ' + env));
+server.listen(port, () => console.log('App running on: localhost:' + port + ' env: ' + env));

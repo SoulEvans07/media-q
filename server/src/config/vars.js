@@ -7,6 +7,11 @@ dotenv.config({
   allowEmptyValues: true
 });
 
+export const env = process.env.NODE_ENV
+export const port = process.env.PORT
+export const host = process.env.NODE_ENV === 'dev' ? process.env.HOST || 'http://127.0.0.1' : process.env.HOST
+export const logs = process.env.NODE_ENV === 'production' ? 'combined' : 'dev'
+
 export const instagram_cred = {
   username: process.env.INSTA_USERNAME,
   password: process.env.INSTA_PASSWORD
@@ -25,5 +30,3 @@ export const targetFolder = path.join(__dirname, '../../target/')
 export const instagramFolder = path.join(targetFolder, 'instagram/')
 export const storiesFolder = path.join(instagramFolder, 'stories/')
 export const sessionFile = path.join(targetFolder, 'instagram/.session')
-
-export const logs = process.env.NODE_ENV === 'production' ? 'combined' : 'dev'
