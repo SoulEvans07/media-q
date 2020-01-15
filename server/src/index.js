@@ -1,3 +1,9 @@
+import { port, env } from './config/vars'
+//import server from './config/express'
+
+//server.listen(port, () => console.log('App running on: localhost:' + port + ' env: ' + env));
+
+import path from 'path'
 import fs from 'fs'
 import cron from 'node-cron'
 import checkDiskSpace from 'check-disk-space'
@@ -9,6 +15,14 @@ import * as Instagram from './instagram-api'
 import { instagram_cred } from './config/vars'
 import { downloadAll, printProgressBar } from './instagramDownloader'
 
+import {
+  templateFolder,
+  targetFolder,
+  instagramFolder,
+  storiesFolder,
+  sessionFile
+} from './config/vars'
+
 Number.prototype.pad = function(length, char = '0') { return String(this).padStart(length, char) }
 
 String.prototype.replaceAll = function (find, replace) {
@@ -16,14 +30,8 @@ String.prototype.replaceAll = function (find, replace) {
   return this.replace(new RegExp(escaped_find, 'g'), replace);
 }
 
-const templateFolder = __dirname + '/templates/'
-const targetFolder = __dirname + '/../target/'
-const instagramFolder = targetFolder + 'instagram/'
-const downloadFolder = instagramFolder + 'stories/'
-const sessionFile = targetFolder + 'instagram/.session'
-
-const getTemplate = async function(name) {
-  return await fs.readFileSync(templateFolder + name + '.template', 'utf-8')
+const getTemplate = function(name) {
+  return fs.readFileSync(templateFolder + name + '.template', 'utf-8')
 }
 
 
@@ -69,13 +77,35 @@ const printDiskStat = async function() {
   return stat
 }
 
-const downloaderLogger = function(username, index, length, skipped) { 
-  console.log(`${skipped ? 'skipped   ' : 'downloaded'}: ${username} ${printProgressBar(index, length)}`) 
+const downloaderLogger = function(username, index, length, skipped) {
+  console.log(`${skipped ? 'skipped   ' : 'downloaded'}: ${username} ${printProgressBar(index, length)}`)
 }
 
 const getDateTimeString = function(date) {
   return `${date.getFullYear()}.${(date.getMonth()+1).pad(2)}.${date.getDate().pad(2)} ` +
     `${date.getHours().pad(2)}:${date.getMinutes().pad(2)}:${date.getSeconds().pad(2)}`
+}
+
+const reorder = async function() {
+  let fileNames = fs.readdirSync(storiesFolder)
+
+  fileNames = fileNames.filter(fileName => {
+    const fpath = path.join(storiesFolder, fileName)
+    const stats = fs.lstatSync(fpath)
+    return !stats.isDirectory()
+  })
+
+  fileNames.forEach(fileName => {
+    const oldPath = path.join(storiesFolder, fileName)
+    const date = fileName.match(/\d{4}-\d{2}-\d{2}/)[0]
+    const folder = path.join(storiesFolder, date)
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder)
+    }
+    const newPath = path.join(folder, fileName)
+    fs.renameSync(oldPath, newPath)
+  })
+  console.log('Done reordering.')
 }
 
 const mailOptions = {
@@ -88,7 +118,7 @@ const mailOptions = {
 const main = async function() {
   const instagram = await Instagram.createInstance(instagram_cred, sessionFile)
   const subjectTemplate = 'MediaQ Report {{{ time }}}'
-  const messageTemplate = await getTemplate('stats.mail')
+  const messageTemplate = getTemplate('stats.mail')
   const data = {
     time: getDateTimeString(new Date()),
     before: null,
@@ -101,7 +131,7 @@ const main = async function() {
   let diskstat = await printDiskStat()
   data.before = diskstat
 
-  downloadAll(instagram, downloadFolder).then(async (stats) => {
+  downloadAll(instagram, storiesFolder).then(async (stats) => {
     console.log('Done downloading\n')
     console.log('downloaded stories: ' + stats.count)
     if (stats.count > 0) {
@@ -130,8 +160,8 @@ const main = async function() {
 
 }
 
-
 cron.schedule('0 * * * *', () => {
   main()
 })
 
+main()

@@ -1,10 +1,11 @@
 /* based on https://github.com/yatsenkolesh/instagram-nodejs */
 import fetch from 'node-fetch'
 import formData from 'form-data'
+import path from 'path'
 import qs from 'qs'
 import fs from 'fs'
 
-import { searchCookie, downloadFile, getTimestampString } from './helpers'
+import { searchCookie, downloadFile, getTimestampString, getDateString } from './helpers'
 
 export class Instagram {
 
@@ -44,11 +45,11 @@ export class Instagram {
       'origin': 'https://www.instagram.com',
       'referer': 'https://www.instagram.com/',
       'upgrade-insecure-requests': '1',
-      'user-agent': this.userAgent,    
+      'user-agent': this.userAgent,
     }
   }
 
-  
+
   generateCookie(simple){
     if (simple) return 'ig_cb=1'
 
@@ -120,7 +121,7 @@ export class Instagram {
   async login(credentials) {
     this.csrfToken = await this.getCsrfToken()
     console.log('csrfToken:', this.csrfToken)
-    
+
     this.sessionId = await this.auth(credentials)
     console.log('sessionId:', this.sessionId)
   }
@@ -141,7 +142,7 @@ export class Instagram {
       const startStr = '<script type="text/javascript">window._sharedData = '
       let start = subStr.indexOf(startStr) + startStr.length
       subStr = subStr.substr(start, subStr.length)
-      
+
       subStr = subStr.substr(0, subStr.indexOf('</script>') - 1)
 
       const json = JSON.parse(subStr)
@@ -160,12 +161,12 @@ export class Instagram {
         'cookie': this.generateCookie()
       })
     }
-    
+
     return fetch('https://www.instagram.com/' + username, fetch_data)
       .then(res => res.text()
       .then(function (data) {
         //console.log(data)
-      
+
         const regex = /window\._sharedData = (.*);<\/script>/;
         const match = regex.exec(data);
         if (typeof match[1] === 'undefined') {
@@ -212,7 +213,7 @@ export class Instagram {
           'cookie': this.generateCookie()
         })
       }).then(res => res.json())
-      
+
       const edge_follow = response.data.user.edge_follow
       follows = follows.concat(edge_follow.edges)
       has_next = edge_follow.page_info.has_next_page
@@ -252,7 +253,7 @@ export class Instagram {
           'cookie': this.generateCookie()
         })
       }).then(res => res.json())
-      
+
       const edge_followed_by = response.data.user.edge_followed_by
       followers = followers.concat(edge_followed_by.edges)
       has_next = edge_followed_by.page_info.has_next_page
@@ -265,7 +266,7 @@ export class Instagram {
 
   getDefaultHeaders() {
     return {
-      'referer': 'https://www.instagram.com', 
+      'referer': 'https://www.instagram.com',
       'origin': 'https://www.instagram.com',
       'user-agent': this.userAgent,
       'x-instagram-ajax': '1',
@@ -317,7 +318,7 @@ export class Instagram {
 
     const headers = {
       'accept': 'application/json',
-      'referer': 'https://www.instagram.com', 
+      'referer': 'https://www.instagram.com',
       'origin': 'https://www.instagram.com',
       'user-agent': this.userAgent,
       'x-instagram-ajax': '1',
@@ -337,7 +338,7 @@ export class Instagram {
         storyNodes.forEach(storyNode => {
           const userName = storyNode.node.user.username
           const userId = storyNode.node.user.id
-          
+
           users.push(userId)
         })
 
@@ -354,9 +355,9 @@ export class Instagram {
         }
 
         const storyReqUrl = 'https://www.instagram.com/graphql/query/' +
-          '?query_hash=52a36e788a02a3c612742ed5146f1676'+ 
+          '?query_hash=52a36e788a02a3c612742ed5146f1676'+
           '&variables=' + JSON.stringify(storyReqVariables)
-        
+
         fetch(storyReqUrl, {
           url: storyReqUrl,
           method: 'get',
@@ -418,7 +419,7 @@ export class Instagram {
       }
 
       if (src) {
-        const filePath = targetFolder + fileName
+        const filePath = path.join(targetFolder, getDateString(datetime), fileName)
         try {
           if (fs.existsSync(filePath)){
             resolve({ fileName, skipped: true })
@@ -476,4 +477,3 @@ export const createInstance = async function(credentials, sessionFilePath) {
 
   return instagram
 }
-

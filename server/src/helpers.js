@@ -24,7 +24,15 @@ export const searchCookie = function(cookies, key) {
   }
 }
 
+
+export const getDateString = function(date) {
+  return date.getFullYear() + '-' + (date.getMonth()+1).pad(2) + '-' + date.getDate().pad(2)
+}
+
+export const getTimeString = function(date) {
+  return date.getHours().pad(2) + date.getMinutes().pad(2) + date.getSeconds().pad(2)
+}
+
 export const getTimestampString = function(date) {
-  return date.getFullYear() + '-' + (date.getMonth()+1).pad(2) + '-' + date.getDate().pad(2) + '-' +
-    date.getHours().pad(2) + date.getMinutes().pad(2) + date.getSeconds().pad(2)
+  return getDateString(date) + '-' + getTimeString(date)
 }
