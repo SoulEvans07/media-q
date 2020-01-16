@@ -18,13 +18,6 @@ import {
   sessionFile
 } from './config/vars'
 
-Number.prototype.pad = function(length, char = '0') { return String(this).padStart(length, char) }
-
-String.prototype.replaceAll = function (find, replace) {
-  const escaped_find = find.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  return this.replace(new RegExp(escaped_find, 'g'), replace);
-}
-
 const getTemplate = function(name) {
   return fs.readFileSync(templateFolder + name + '.template', 'utf-8')
 }

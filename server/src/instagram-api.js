@@ -414,11 +414,11 @@ export class Instagram {
       if (item.is_video) {
         src = item.video
         fileName = username + '-' + getTimestampString(datetime) + '.mp4'
-        thumbnailName = username + '-' + getTimestampString(datetime) + '.template.jpg'
+        thumbnailName = username + '-' + getTimestampString(datetime) + '.thumbnail.jpg'
       } else {
         src = item.image
         fileName = username + '-' + getTimestampString(datetime) + '.jpg'
-        thumbnailName = username + '-' + getTimestampString(datetime) + '.template.jpg'
+        thumbnailName = username + '-' + getTimestampString(datetime) + '.thumbnail.jpg'
       }
 
       if (src) {

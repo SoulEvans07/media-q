@@ -4,6 +4,7 @@ import * as instaController from '../controllers/instaController'
 
 const router = express.Router()
 
+router.get('/story/list/:date', instaController.story.list)
 router.get('/story/:filename', instaController.story.get)
 
 export default router

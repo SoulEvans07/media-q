@@ -27,8 +27,10 @@
     "check-disk-space": "^2.1.0",
     "cors": "^2.8.5",
     "dotenv-safe": "^6.1.0",
+    "exif2": "0.0.1",
     "express": "^4.16.4",
     "express-session": "^1.17.0",
+    "fluent-ffmpeg": "^2.1.2",
     "form-data": "^3.0.0",
     "get-folder-size": "^2.0.1",
     "helmet": "^3.18.0",
@@ -46,7 +48,8 @@
     "qs": "^6.9.1",
     "request": "^2.88.0",
     "require-all": "^3.0.0",
-    "smtp-server": "^3.5.0"
+    "smtp-server": "^3.5.0",
+    "thumbler": "^1.1.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0",
