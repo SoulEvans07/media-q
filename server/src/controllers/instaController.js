@@ -27,7 +27,7 @@ const getMetaData = async function(filePath) {
 
 const listStories = async function(req, res, next) {
   const THUMBNAIL_EXT = '.thumbnail.jpg'
-  const THUMBNAIL_COMPRESSION = 0.6
+  const THUMBNAIL_COMPRESSION = 0.1
 
   const dateFolder = path.join(storiesFolder, req.params.date)
   if (!fs.existsSync(dateFolder)) {
@@ -60,21 +60,27 @@ const listStories = async function(req, res, next) {
     const thumbnailName = key + THUMBNAIL_EXT
     const thumbnailPath = path.join(dateFolder, thumbnailName)
 
-    if (item.thumbnail === null) {
-      const meta = await getMetaData(srcPath)
-      const options = {
-        type: item.is_video ? 'video' : 'image',
-        input: srcPath,
-        output: thumbnailPath,
-        size: `${Math.round(meta.width * THUMBNAIL_COMPRESSION)}x${Math.round(meta.height * THUMBNAIL_COMPRESSION)}`
-      }
-      if (item.is_video) {
-        options.time = '00:00:00'
-      }
 
+    if (item.thumbnail === null) {
       try {
-        const newThumbnail = await Thumbler(options)
-        item.thumbnail = thumbnailName
+        const meta = await getMetaData(srcPath)
+
+        const options = {
+          type: item.is_video ? 'video' : 'image',
+          input: srcPath,
+          output: thumbnailPath,
+          size: `${100}x${Math.round(meta.height * (100 / meta.width))}`
+        }
+        if (item.is_video) {
+          options.time = '00:00:00'
+        }
+
+        try {
+          const newThumbnail = await Thumbler(options)
+          item.thumbnail = thumbnailName
+        } catch (e) {
+          console.log(e)
+        }
       } catch (e) {
         console.log(e)
       }

@@ -5,6 +5,7 @@ import path from 'path'
 import qs from 'qs'
 import fs from 'fs'
 
+import Thumbler from './helpers/thumbler-wrapper'
 import { searchCookie, downloadFile, getTimestampString, getDateString } from './helpers'
 
 export class Instagram {
@@ -379,20 +380,22 @@ export class Instagram {
 
               if (item.is_video) {
                 const video_resources = item.video_resources
+                const video = video_resources[video_resources.length-1]
 
                 return {
                   timestamp: item.taken_at_timestamp,
                   is_video: true,
                   has_audio: item.has_audio,
                   thumbnail: display_resources[0].src,
-                  video: video_resources[video_resources.length-1].src
+                  ...video
                 }
               } else {
+                const image = display_resources[display_resources.length-1]
                 return {
                   timestamp: item.taken_at_timestamp,
                   is_video: false,
                   thumbnail: display_resources[0].src,
-                  image: display_resources[display_resources.length-1].src
+                  ...image
                 }
               }
             })
@@ -406,17 +409,15 @@ export class Instagram {
 
   downloadStoryItem(username, item, targetFolder) {
     return new Promise((resolve, reject) => {
-      let src = null
+      let src = item.src
       let fileName = null
       let thumbnailName = null
       const datetime = new Date(item.timestamp * 1000)
 
       if (item.is_video) {
-        src = item.video
         fileName = username + '-' + getTimestampString(datetime) + '.mp4'
         thumbnailName = username + '-' + getTimestampString(datetime) + '.thumbnail.jpg'
       } else {
-        src = item.image
         fileName = username + '-' + getTimestampString(datetime) + '.jpg'
         thumbnailName = username + '-' + getTimestampString(datetime) + '.thumbnail.jpg'
       }
@@ -432,15 +433,28 @@ export class Instagram {
         try {
           const fileExists = fs.existsSync(filePath)
           const thumbnailExists = fs.existsSync(thumbnailPath)
+
           if (fileExists && thumbnailExists){
             resolve({ fileName, skipped: true })
           } else {
-            const promises = []
-            if (!fileExists) promises.push(downloadFile(src, filePath))
-            if (!thumbnailExists) promises.push(downloadFile(item.thumbnail, thumbnailPath))
-            Promise.all(promises)
-              .then(() => resolve({ fileName, skipped: false }))
-              .catch(e => reject(e))
+            let promiseChain = null
+            const options = {
+              type: item.is_video ? 'video' : 'image',
+              input: filePath,
+              output: thumbnailPath,
+              size: `${100}x${Math.round(item.config_height * (100 / item.config_width))}`
+            }
+            if (item.is_video) {
+              options.time = '00:00:00'
+            }
+
+            if (!fileExists) {
+              promiseChain = downloadFile(src, filePath).then(() => Thumbler(options))
+            } else {
+              promiseChain = Thumbler(options)
+            }
+
+            promiseChain.then(() => resolve({ fileName, skipped: false })).catch(e => reject(e))
           }
         } catch(e) {
           reject(e)
