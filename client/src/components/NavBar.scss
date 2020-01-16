@@ -1,4 +1,6 @@
 #navbar {
+  display: flex;
+  flex-shrink: 0;
   height: 50px;
 
   background: rgb(255, 255, 255);

@@ -1,6 +1,39 @@
 #insta-view {
   display: flex;
-  flex-direction: column;
   flex-grow: 1;
+  flex-direction: column;
   background: rgb(250, 250, 250);
+
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+
+  .loading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .story-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .story-card {
+    display: flex;
+    width: 100px;
+    height: 175px;
+
+    .story-thumbnail {
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      overflow: hidden;
+    }
+  }
+
 }
