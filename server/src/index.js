@@ -1,4 +1,4 @@
-//import main from './main'
+// import main from './main'
 import { port, env } from './config/vars'
 import server from './config/express'
 

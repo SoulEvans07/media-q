@@ -126,7 +126,7 @@ const main = async function() {
   let diskstat = await printDiskStat()
   data.before = diskstat
 
-  downloadAll(instagram, storiesFolder).then(async (stats) => {
+  downloadAll(instagram, storiesFolder, downloaderLogger).then(async (stats) => {
     console.log('Done downloading\n')
     console.log('downloaded stories: ' + stats.count)
     if (stats.count > 0) {

@@ -408,23 +408,39 @@ export class Instagram {
     return new Promise((resolve, reject) => {
       let src = null
       let fileName = null
+      let thumbnailName = null
       const datetime = new Date(item.timestamp * 1000)
 
       if (item.is_video) {
         src = item.video
         fileName = username + '-' + getTimestampString(datetime) + '.mp4'
+        thumbnailName = username + '-' + getTimestampString(datetime) + '.template.jpg'
       } else {
         src = item.image
         fileName = username + '-' + getTimestampString(datetime) + '.jpg'
+        thumbnailName = username + '-' + getTimestampString(datetime) + '.template.jpg'
       }
 
       if (src) {
-        const filePath = path.join(targetFolder, getDateString(datetime), fileName)
+        const folderPath = path.join(targetFolder, getDateString(datetime))
+        if (!fs.existsSync(folderPath)) {
+          fs.mkdirSync(folderPath)
+        }
+
+        const filePath = path.join(folderPath, fileName)
+        const thumbnailPath = path.join(folderPath, thumbnailName)
         try {
-          if (fs.existsSync(filePath)){
+          const fileExists = fs.existsSync(filePath)
+          const thumbnailExists = fs.existsSync(thumbnailPath)
+          if (fileExists && thumbnailExists){
             resolve({ fileName, skipped: true })
           } else {
-            downloadFile(src, filePath).then(() => resolve({ fileName, skipped: false }))
+            const promises = []
+            if (!fileExists) promises.push(downloadFile(src, filePath))
+            if (!thumbnailExists) promises.push(downloadFile(item.thumbnail, thumbnailPath))
+            Promise.all(promises)
+              .then(() => resolve({ fileName, skipped: false }))
+              .catch(e => reject(e))
           }
         } catch(e) {
           reject(e)

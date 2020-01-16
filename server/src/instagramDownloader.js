@@ -20,18 +20,15 @@ export const downloadAll = function(instance, targetFolder, logger) {
         const user = stories[0]
         const storyItems = stories[1]
 
-        let index = 1
-        storyItems.forEach(item => {
+        storyItems.forEach((item, index) => {
           instance.downloadStoryItem(user, item, targetFolder).then(res => {
-            if (logger) logger(user.padEnd(padName, ' '), index, storyItems.length, res.skipped)
+            if (logger) logger(user.padEnd(padName, ' '), index+1, storyItems.length, res.skipped)
 
             if (!res.skipped && stats.users[user]) { stats.users[user]++; stats.count++; }
             if (!res.skipped && !stats.users[user]) { stats.users[user] = 1; stats.count++; }
-            
-            if (index === storyItems.length) userDone++
+
+            if (index === storyItems.length - 1) userDone++
             if (userDone === userCount) resolve(stats)
-            
-            index++
           })
         })
       })
@@ -41,7 +38,7 @@ export const downloadAll = function(instance, targetFolder, logger) {
 }
 
 export const downloadAllOf = function(instance, userName, targetFolder) {
-  if (!userName) { 
+  if (!userName) {
     console.log("No userName given")
     return
   }
@@ -49,7 +46,7 @@ export const downloadAllOf = function(instance, userName, targetFolder) {
   return new Promise((resolve, reject) => {
     instance.getStoryUrls(cookies).then(storiesByUser => {
       const storyItems = storiesByUser[userName]
-      if(!storyItems) { 
+      if(!storyItems) {
         console.log("No matching user for: " + userName)
         return
       }
@@ -65,5 +62,5 @@ export const downloadAllOf = function(instance, userName, targetFolder) {
       })
     })
   })
-  
+
 }
