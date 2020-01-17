@@ -1,0 +1,19 @@
+.busy-signal {
+  height: 6px;
+  width: 6px;
+
+  border-radius: 6px;
+  border: 1px solid hsl(0, 0%, 70%);
+
+  transform: translateY(-0.5px);
+
+  &.idle {
+    background: #83ff54;
+    border: none;
+  }
+
+  &.busy {
+    border: none;
+    background: #ff6c54;
+  }
+}

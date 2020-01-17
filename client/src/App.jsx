@@ -3,6 +3,7 @@ import './App.scss'
 
 import InstaView from './views/InstaView'
 import NavBar from './components/NavBar'
+import StatusBar from './components/StatusBar'
 
 class App extends Component {
 
@@ -11,6 +12,7 @@ class App extends Component {
       <div className="app">
         <NavBar />
         <InstaView />
+        <StatusBar />
       </div>
     )
   }

@@ -1,0 +1,15 @@
+#status-bar {
+  $hor-pad: 5px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: calc(100% - 2 * #{$hor-pad});
+  min-height: 20px;
+  padding: 0 $hor-pad;
+
+  font-size: 10px;
+
+  background: rgb(255, 255, 255);
+  border-top: 1px solid hsl(0, 0%, 86%);
+}
