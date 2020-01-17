@@ -36,3 +36,10 @@ export const getTimeString = function(date) {
 export const getTimestampString = function(date) {
   return getDateString(date) + '-' + getTimeString(date)
 }
+
+export const promiseLog = function(...args) {
+  return new Promise((resolve, reject) => {
+    console.log(...args)
+    resolve()
+  })
+}

@@ -7,6 +7,8 @@ import Thumbler from '../helpers/thumbler-wrapper'
 import ffmpeg from '../helpers/ffmpeg-wrapper'
 import { storiesFolder } from '../config/vars'
 
+import { main } from '../main'
+
 const getMetaData = async function(filePath) {
   const meta = { is_video: filePath.endsWith('.mp4') }
 
@@ -34,7 +36,7 @@ const listStories = async function(req, res, next) {
     return res.status(404).send()
   }
 
-  const files = fs.readdirSync(dateFolder)
+  const files = fs.readdirSync(dateFolder).slice(0, 30)
 
   const itemsMap = {}
   files.forEach(file => {
@@ -52,40 +54,40 @@ const listStories = async function(req, res, next) {
     }
   })
 
-  await Object.entries(itemsMap).forEachAsync(async entry => {
-    const key = entry[0]
-    const item = entry[1]
-
-    const srcPath = path.join(dateFolder, item.src)
-    const thumbnailName = key + THUMBNAIL_EXT
-    const thumbnailPath = path.join(dateFolder, thumbnailName)
-
-
-    if (item.thumbnail === null) {
-      try {
-        const meta = await getMetaData(srcPath)
-
-        const options = {
-          type: item.is_video ? 'video' : 'image',
-          input: srcPath,
-          output: thumbnailPath,
-          size: `${100}x${Math.round(meta.height * (100 / meta.width))}`
-        }
-        if (item.is_video) {
-          options.time = '00:00:00'
-        }
-
-        try {
-          const newThumbnail = await Thumbler(options)
-          item.thumbnail = thumbnailName
-        } catch (e) {
-          console.log(e)
-        }
-      } catch (e) {
-        console.log(e)
-      }
-    }
-  })
+  // await Object.entries(itemsMap).forEachAsync(async entry => {
+  //   const key = entry[0]
+  //   const item = entry[1]
+  //
+  //   const srcPath = path.join(dateFolder, item.src)
+  //   const thumbnailName = key + THUMBNAIL_EXT
+  //   const thumbnailPath = path.join(dateFolder, thumbnailName)
+  //
+  //
+  //   if (item.thumbnail === null) {
+  //     try {
+  //       const meta = await getMetaData(srcPath)
+  //
+  //       const options = {
+  //         type: item.is_video ? 'video' : 'image',
+  //         input: srcPath,
+  //         output: thumbnailPath,
+  //         size: `${100}x${Math.round(meta.height * (100 / meta.width))}`
+  //       }
+  //       if (item.is_video) {
+  //         options.time = '00:00:00'
+  //       }
+  //
+  //       try {
+  //         const newThumbnail = await Thumbler(options)
+  //         item.thumbnail = thumbnailName
+  //       } catch (e) {
+  //         console.log(e)
+  //       }
+  //     } catch (e) {
+  //       console.log(e)
+  //     }
+  //   }
+  // })
 
   return res.status(200).send(itemsMap)
 }
@@ -111,8 +113,16 @@ const getStory = async function(req, res, next) {
   // }
 }
 
+const refresh = function(req, res, next) {
+  main()
+    .then(result => res.status(200).send(result))
+    .catch(e => res.status(500).send(e.message))
+}
+
 
 export const story = {
   list: listStories,
-  get: getStory
+  get: getStory,
+
+  refresh: refresh
 }

@@ -2,7 +2,40 @@
   display: flex;
   flex-shrink: 0;
   height: 50px;
+  align-items: center;
+  padding: 0 10px;
 
   background: rgb(255, 255, 255);
-  border-bottom: 1px solid rgb(219, 219, 219);
+  border-bottom: 1px solid hsl(0, 0%, 86%);
+
+  .refresh-btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 30px;
+    border-radius: 3px;
+    color: hsl(0, 0%, 60%);
+    border: 1px solid hsl(0, 0%, 86%);;
+    background: hsl(0, 0%, 98%);
+    padding: 0 8px;
+
+    .btn-label {
+      padding: 0 2px;
+    }
+
+    .btn-icon {
+      width: 14px;
+      height: 14px;
+      padding: 0 2px;
+      fill: hsl(0, 0%, 70%);
+    }
+
+    &:hover {
+      background: hsl(0, 0%, 95%);
+    }
+
+    &:active {
+      background: hsl(0, 0%, 92%);
+    }
+  }
 }

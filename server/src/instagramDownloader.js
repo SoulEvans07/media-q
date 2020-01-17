@@ -10,7 +10,7 @@ export const downloadAll = function(instance, targetFolder, logger) {
   return new Promise((resolve, reject) => {
     let userDone = 0
     instance.getStoryUrls().then(storiesByUser => {
-      const userCount = Object.values(storiesByUser).length
+      const userCount = Object.keys(storiesByUser).length
       console.log("number of users with stories:", userCount)
       const stats = { count: 0, users: {} }
 
@@ -19,16 +19,24 @@ export const downloadAll = function(instance, targetFolder, logger) {
       Object.entries(storiesByUser).forEach(stories => {
         const user = stories[0]
         const storyItems = stories[1]
+        stats.users[user] = { downloaded: 0, skipped: 0, count: storyItems.length, done: false }
+        const userStat = stats.users[user]
+
+        if (storyItems.length === 0) console.log("WHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT")
 
         storyItems.forEach((item, index) => {
           instance.downloadStoryItem(user, item, targetFolder).then(res => {
-            if (logger) logger(user.padEnd(padName, ' '), index+1, storyItems.length, res.skipped)
+            if (res.skipped) userStat.skipped++
+            else { userStat.downloaded++; stats.count++ }
 
-            if (!res.skipped && stats.users[user]) { stats.users[user]++; stats.count++; }
-            if (!res.skipped && !stats.users[user]) { stats.users[user] = 1; stats.count++; }
+            if (userStat.downloaded + userStat.skipped === userStat.count) userStat.done = true
+            const numberOfDone = Object.values(stats.users).reduce((doneCount, stat) => doneCount + (stat.done ? 1 : 0), 0)
+            const isFinal = numberOfDone === userCount
 
-            if (index === storyItems.length - 1) userDone++
-            if (userDone === userCount) resolve(stats)
+            //if (logger) logger(user.padEnd(padName, ' '), userStat.downloaded, userStat.count, res.skipped)
+            console.log(res.skipped ? 's' : 'd', user, stats.users[user], `${numberOfDone}/${userCount}`)
+
+            if (isFinal) resolve(stats)
           })
         })
       })

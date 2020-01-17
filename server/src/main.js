@@ -9,13 +9,15 @@ import * as mailHelper from './mail-helper'
 import * as Instagram from './instagram-api'
 import { instagram_cred } from './config/vars'
 import { downloadAll, printProgressBar } from './instagramDownloader'
+import { getTimestampString } from './helpers'
 
 import {
   templateFolder,
   targetFolder,
   instagramFolder,
   storiesFolder,
-  sessionFile
+  sessionFile,
+  lockFile
 } from './config/vars'
 
 const getTemplate = function(name) {
@@ -32,7 +34,7 @@ const getFileSize = function(path) {
   })
 }
 
-const printDiskStat = async function() {
+const printDiskStat = async function(label) {
   const diskSpace = await checkDiskSpace('/home')
   const folderSize = await getFileSize(instagramFolder)
 
@@ -53,12 +55,13 @@ const printDiskStat = async function() {
   stat.insta.perc = Math.round(stat.insta.b / stat.size.b * 10000) / 100
   stat.other.perc = Math.round(stat.other.b / stat.size.b * 10000) / 100
 
-  stat.formatted = 'free      : ' + (stat.free.mb + ' MB').padStart(8, ' ')  + '  ' + (stat.free.perc  + ' %').padStart(7, ' ') + '\n' +
+  stat.formatted =
+    'free      : ' + (stat.free.mb + ' MB').padStart(8, ' ')  + '  ' + (stat.free.perc  + ' %').padStart(7, ' ') + '\n' +
     'instagram : ' + (stat.insta.mb + ' MB').padStart(8, ' ') + '  ' + (stat.insta.perc + ' %').padStart(7, ' ') + '\n' +
     'other     : ' + (stat.other.mb + ' MB').padStart(8, ' ') + '  ' + (stat.other.perc + ' %').padStart(7, ' ')
 
   console.log('\n')
-  console.log('= ' + stat.path + ' '.padEnd(22, '='))
+  console.log(('= ' + label + ': ' + stat.path + ' ').padEnd(30, '='))
   console.log(stat.formatted)
   console.log('\n')
 
@@ -103,7 +106,26 @@ const mailOptions = {
   html: '<b>No message?</b>'
 }
 
-const main = async function() {
+const isLocked = function() {
+  return fs.existsSync(lockFile)
+}
+
+const createLock = function() {
+  const timestamp = getTimestampString(new Date())
+  fs.writeFileSync(lockFile, timestamp)
+}
+
+const removeLock = function() {
+  const timestamp = fs.readFileSync(lockFile)
+  fs.unlinkSync(lockFile)
+  return timestamp
+}
+
+export const main = async function() {
+  //if (isLocked()) throw new Error('Action locked')
+
+  createLock()
+
   const instagram = await Instagram.createInstance(instagram_cred, sessionFile)
   const subjectTemplate = 'MediaQ Report {{{ time }}}'
   const messageTemplate = getTemplate('stats.mail')
@@ -116,39 +138,39 @@ const main = async function() {
 
   console.log(mustache.render(subjectTemplate, { time: data.time }))
 
-  let diskstat = await printDiskStat()
+  let diskstat = await printDiskStat('before')
   data.before = diskstat
 
-  downloadAll(instagram, storiesFolder, downloaderLogger).then(async (stats) => {
-    console.log('Done downloading\n')
+  return downloadAll(instagram, storiesFolder, downloaderLogger).then(async (stats) => {
+    //console.log('Done downloading\n')
     console.log('downloaded stories: ' + stats.count)
     if (stats.count > 0) {
-      console.log('------------------------')
-      console.log(Object.entries(stats.users).map(u => `${u[0]}: ${u[1]}` ).join('\n'))
+      //console.log('------------------------')
+      //console.log(Object.entries(stats.users).map(u => `${u[0]}: ${u[1]}` ).join('\n'))
 
       data.downloads = { count: stats.count, users: [] }
-      Object.entries(stats.users).forEach(u => data.downloads.users.push({ username: u[0], count: u[1] }))
+      Object.entries(stats.users).forEach(u => data.downloads.users.push({ username: u[0], count: u[1].downloaded }))
     } else {
       data.downloads = { count: 0, users: 'none' }
     }
 
-    diskstat = await printDiskStat()
+    diskstat = await printDiskStat('after')
     data.after = diskstat
 
     mailOptions.subject = mustache.render(subjectTemplate, { time: data.time })
     mailOptions.html = mustache.render(messageTemplate, data)
 
-    mailHelper.sendMail(mailOptions, (error, info) => {
-      if (error) {
-          return console.log(error);
-      }
-      console.log('Message sent: %s', info.messageId)
-    })
-  })
+    // mailHelper.sendMail(mailOptions, (error, info) => {
+    //   if (error) console.log(error)
+    //   console.log('Message sent: %s', info.messageId)
+    // })
 
+    removeLock()
+
+    return data
+  })
 }
 
-main()
-cron.schedule('0 * * * *', () => {
+cron.schedule('0 */6 * * *', () => {
   main()
 })

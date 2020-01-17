@@ -6,7 +6,7 @@ import qs from 'qs'
 import fs from 'fs'
 
 import Thumbler from './helpers/thumbler-wrapper'
-import { searchCookie, downloadFile, getTimestampString, getDateString } from './helpers'
+import { searchCookie, downloadFile, getTimestampString, getDateString, promiseLog } from './helpers'
 
 export class Instagram {
 
@@ -449,9 +449,16 @@ export class Instagram {
             }
 
             if (!fileExists) {
-              promiseChain = downloadFile(src, filePath).then(() => Thumbler(options))
+              promiseChain = promiseLog('started download', fileName)
+                .then(() => downloadFile(src, filePath))
+                .then(() => promiseLog('download finished', fileName))
+                .then(() => promiseLog('started thumbnail', fileName))
+                .then(() => Thumbler(options))
+                .then(() => promiseLog('thumbnail finished', fileName))
             } else {
-              promiseChain = Thumbler(options)
+              promiseChain = promiseLog('started thumbnail', fileName)
+                .then(() => Thumbler(options))
+                .then(() => promiseLog('thumbnail finished', fileName))
             }
 
             promiseChain.then(() => resolve({ fileName, skipped: false })).catch(e => reject(e))
