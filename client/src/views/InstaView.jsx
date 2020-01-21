@@ -1,42 +1,40 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import './InstaView.scss'
 
 import Loader from '../components/Loader'
 
 class InstaView extends Component {
-  constructor() {
-    super()
-
-    this.state = {
-      stories: null
-    }
-  }
 
   componentDidMount() {
-    const url = 'http://localhost:3000/api/insta/story/list/2020-01-16'
+    const { dispatch } = this.props
+    const url = 'http://localhost:3000/api/insta/story/list/latest'
 
     fetch(url)
     .then(res => res.json())
     .then(res => {
       if (res.error) {
-        this.setState({ stories: [] })
+        dispatch({ type: 'SET_STORIES', payload: { stories: [] } })
         console.error(res.error)
       } else {
-        this.setState({ stories: Object.values(res) })
+        dispatch({ type: 'SET_STORIES', payload: { stories: res } })
       }
+    }).catch(e => {
+      dispatch({ type: 'SET_STORIES', payload: { stories: [] } })
+      console.log(e)
     })
   }
 
   render() {
     const URL_BASE = 'http://localhost:3000/api/insta/story/'
-    const { stories } = this.state
+    const { stories } = this.props
 
     return (
       <div id="insta-view">
         { stories ?
           <div className="story-list">
             { stories.map(story => (
-              <span className="story-card" key={ story.src }>
+              <span className="story-card" key={ story.src } title={ story.src }>
                 <a href={ URL_BASE + story.src }>
                   <img className="story-thumbnail" src={ URL_BASE + story.thumbnail } alt={ story.src } />
                 </a>
@@ -53,4 +51,8 @@ class InstaView extends Component {
   }
 }
 
-export default InstaView
+const mapStateToProps = state => ({
+  stories: state.stories
+})
+
+export default connect(mapStateToProps, null)(InstaView)

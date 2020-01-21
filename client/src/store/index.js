@@ -3,8 +3,14 @@ import thunk from 'redux-thunk'
 
 import initialState from './initialState'
 
-function rootReducer(state, action) {
+const setStories = function(state, payload) {
+  return { ...state, stories: payload.stories }
+}
+
+const rootReducer = function(state, action) {
   switch (action.type) {
+    case 'SET_STORIES':
+      return setStories(state, action.payload)
     default:
       return state
   }
@@ -24,7 +30,7 @@ const loadState = function() {
   }
 }
 
-const store = createStore(rootReducer, loadState(), applyMiddleware(thunk))
+const store = createStore(rootReducer, initialState /*loadState()*/, applyMiddleware(thunk))
 
 store.subscribe(() => {
   const currentState = store.getState()
