@@ -25,6 +25,25 @@ export const searchCookie = function(cookies, key) {
 }
 
 
+export const matchDateString = function(fileName) {
+  return fileName.match(/\d{4}-\d{2}-\d{2}/)[0]
+}
+
+export const matchTimeString = function(fileName) {
+  return fileName.match(/-\d{6}/)[0].substring(1)
+}
+
+export const matchDateTimeString = function(fileName) {
+  return matchDateString(fileName) + '-' + matchTimeString(fileName)
+}
+
+export const convertDateTimeString = function(fileName) {
+  const date = matchDateString(fileName)
+  let time = matchTimeString(fileName)
+  time = time.substring(0, 2) + ':' + time.substring(2, 4) + ':' + time.substring(4, 6)
+  return Date.parse(date + ' ' + time)
+}
+
 export const getDateString = function(date) {
   return date.getFullYear() + '-' + (date.getMonth()+1).pad(2) + '-' + date.getDate().pad(2)
 }

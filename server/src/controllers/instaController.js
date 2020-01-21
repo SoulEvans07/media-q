@@ -6,6 +6,12 @@ import exif from '../helpers/exif-wrapper'
 import Thumbler from '../helpers/thumbler-wrapper'
 import ffmpeg from '../helpers/ffmpeg-wrapper'
 import { storiesFolder } from '../config/vars'
+import {
+  getDateString,
+  matchDateString,
+  matchDateTimeString,
+  convertDateTimeString
+} from '../helpers'
 
 import { main } from '../main'
 
@@ -31,24 +37,34 @@ const listStories = async function(req, res, next) {
   const THUMBNAIL_EXT = '.thumbnail.jpg'
   const THUMBNAIL_COMPRESSION = 0.1
 
-  const dateFolder = path.join(storiesFolder, req.params.date)
+  let date = req.params.date
+  if (date === 'latest') {
+    date = getDateString(new Date())
+  }
+
+  const dateFolder = path.join(storiesFolder, date)
   if (!fs.existsSync(dateFolder)) {
     return res.status(404).send()
   }
 
-  const files = fs.readdirSync(dateFolder).slice(0, 30)
+  const files = fs.readdirSync(dateFolder)
 
   const itemsMap = {}
   files.forEach(file => {
     const is_template = file.endsWith(THUMBNAIL_EXT)
     const base = file.substr(0, file.length - (is_template ? THUMBNAIL_EXT.length : 4 ))
     if (itemsMap[base] === undefined) {
-      itemsMap[base] = { src: null, thumbnail: null, is_video: undefined }
+      itemsMap[base] = {
+        src: null,
+        thumbnail: null,
+        is_video: undefined
+      }
     }
 
     if (file.endsWith(THUMBNAIL_EXT)) {
       itemsMap[base].thumbnail = file
     } else {
+      itemsMap[base].date = convertDateTimeString(file)
       itemsMap[base].src = file
       itemsMap[base].is_video = file.endsWith('.mp4')
     }
@@ -89,12 +105,15 @@ const listStories = async function(req, res, next) {
   //   }
   // })
 
-  return res.status(200).send(itemsMap)
+  let itemsList = Object.values(itemsMap)
+  itemsList.sort((a, b) => a.date - b.date).reverse()
+
+  return res.status(200).send(itemsList)
 }
 
 const getStory = async function(req, res, next) {
   const fileName = req.params.filename
-  const date = fileName.match(/\d{4}-\d{2}-\d{2}/)[0]
+  const date = matchDateString(fileName)
   const filePath = path.join(storiesFolder, date, fileName)
   const is_video = fileName.endsWith('.mp4')
 

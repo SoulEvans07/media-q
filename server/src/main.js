@@ -9,7 +9,7 @@ import * as mailHelper from './mail-helper'
 import * as Instagram from './instagram-api'
 import { instagram_cred } from './config/vars'
 import { downloadAll, printProgressBar } from './instagramDownloader'
-import { getTimestampString } from './helpers'
+import { getTimestampString, matchDateString } from './helpers'
 
 import {
   templateFolder,
@@ -88,7 +88,7 @@ const reorder = async function() {
 
   fileNames.forEach(fileName => {
     const oldPath = path.join(storiesFolder, fileName)
-    const date = fileName.match(/\d{4}-\d{2}-\d{2}/)[0]
+    const date = matchDateString(fileName)
     const folder = path.join(storiesFolder, date)
     if (!fs.existsSync(folder)) {
       fs.mkdirSync(folder)
