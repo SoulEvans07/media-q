@@ -8,16 +8,26 @@ class InstaView extends Component {
 
   componentDidMount() {
     const { dispatch } = this.props
-    const url = 'http://localhost:3000/api/insta/story/list/latest'
+    const dates_url = 'http://localhost:3000/api/insta/story/dates'
+    const latest_url = 'http://localhost:3000/api/insta/story/list/latest'
 
-    fetch(url)
+    fetch(dates_url)
     .then(res => res.json())
-    .then(res => {
-      if (res.error) {
+    .then(data => {
+      dispatch({ type: 'SET_DATES', payload: { dates: data } })
+    }).catch(e => {
+      dispatch({ type: 'SET_DATES', payload: { dates: [] } })
+      console.log(e)
+    })
+
+    fetch(latest_url)
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
         dispatch({ type: 'SET_STORIES', payload: { stories: [] } })
-        console.error(res.error)
+        console.error(data.error)
       } else {
-        dispatch({ type: 'SET_STORIES', payload: { stories: res } })
+        dispatch({ type: 'SET_STORIES', payload: { stories: data } })
       }
     }).catch(e => {
       dispatch({ type: 'SET_STORIES', payload: { stories: [] } })

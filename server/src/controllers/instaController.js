@@ -132,16 +132,21 @@ const getStory = async function(req, res, next) {
   // }
 }
 
-const refresh = function(req, res, next) {
+const refresh = async function(req, res, next) {
   main()
     .then(result => res.status(200).send(result))
     .catch(e => res.status(500).send(e.message))
+}
+
+const getAvailableDates = async function(req, res, next) {
+  const dateFolders = fs.readdirSync(storiesFolder)
+  return res.status(200).send(dateFolders)
 }
 
 
 export const story = {
   list: listStories,
   get: getStory,
-
+  dates: getAvailableDates,
   refresh: refresh
 }

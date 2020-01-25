@@ -22,8 +22,6 @@ export const downloadAll = function(instance, targetFolder, logger) {
         stats.users[user] = { downloaded: 0, skipped: 0, count: storyItems.length, done: false }
         const userStat = stats.users[user]
 
-        if (storyItems.length === 0) console.log("WHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT")
-
         storyItems.forEach((item, index) => {
           instance.downloadStoryItem(user, item, targetFolder).then(res => {
             if (res.skipped) userStat.skipped++
@@ -40,7 +38,6 @@ export const downloadAll = function(instance, targetFolder, logger) {
           })
         })
       })
-
     })
   })
 }

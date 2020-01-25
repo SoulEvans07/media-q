@@ -1,5 +1,6 @@
 const initialState = {
-  stories: null
+  stories: null,
+  dates: null,
 }
 
 export default initialState

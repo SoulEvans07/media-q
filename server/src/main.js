@@ -122,10 +122,6 @@ const removeLock = function() {
 }
 
 export const main = async function() {
-  //if (isLocked()) throw new Error('Action locked')
-
-  createLock()
-
   const instagram = await Instagram.createInstance(instagram_cred, sessionFile)
   const subjectTemplate = 'MediaQ Report {{{ time }}}'
   const messageTemplate = getTemplate('stats.mail')
@@ -164,13 +160,10 @@ export const main = async function() {
     //   if (error) console.log(error)
     //   console.log('Message sent: %s', info.messageId)
     // })
-
-    removeLock()
-
     return data
   })
 }
 
-cron.schedule('0 */6 * * *', () => {
-  main()
-})
+// cron.schedule('0 */6 * * *', () => {
+//   main()
+// })

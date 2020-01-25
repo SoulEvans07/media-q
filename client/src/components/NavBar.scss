@@ -8,6 +8,51 @@
   background: rgb(255, 255, 255);
   border-bottom: 1px solid hsl(0, 0%, 86%);
 
+  .react-datepicker {
+    font-size: 0.8rem !important;
+  }
+
+  .react-datepicker__current-month {
+    font-size: 0.8rem !important;
+  }
+
+  .react-datepicker__header {
+    padding-top: 2px !important;
+  }
+
+  .react-datepicker__navigation {
+    top: 6px !important;
+  }
+
+  .react-datepicker__day-name, .react-datepicker__day {
+    margin: 2px !important;
+    width: 1.3rem !important;
+    padding: 2px 0 0;
+    line-height: 1.3rem !important;
+  }
+
+  .date-input {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 30px;
+    border-radius: 3px;
+    color: hsl(0, 0%, 60%);
+    border: 1px solid hsl(0, 0%, 86%);;
+    background: hsl(0, 0%, 98%);
+    padding: 0 10px;
+
+    margin: 0 10px;
+
+    &:hover {
+      background: hsl(0, 0%, 95%);
+    }
+
+    &:active {
+      background: hsl(0, 0%, 92%);
+    }
+  }
+
   .refresh-btn {
     display: flex;
     flex-direction: row;

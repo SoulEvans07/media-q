@@ -8,6 +8,8 @@ import './index.css';
 import App from './App';
 import store from './store'
 
+import polyfills from './polyfills'
+
 window.store = store
 
 ReactDOM.render(
