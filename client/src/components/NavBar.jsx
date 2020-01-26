@@ -50,7 +50,7 @@ class NavBar extends Component {
 
   render() {
     const { selectedDate } = this.state
-    const { dates } = this.props
+    const { dates, dispatch } = this.props
 
     const dateList = dates ? dates.map(d => Date.parse(d)) : [ new Date() ]
 
@@ -71,15 +71,17 @@ class NavBar extends Component {
           </svg>
         </button>
 
-        <div>
-          <DatePicker
-            selected={selectedDate}
-            dateFormat="yyyy-MM-dd"
-            includeDates={dateList}
-            customInput={<CustomDateInput />}
-            onChange={date => this.setDate(date)}
-          />
-        </div>
+        <DatePicker
+          selected={selectedDate}
+          dateFormat="yyyy-MM-dd"
+          includeDates={dateList}
+          customInput={<CustomDateInput />}
+          onChange={date => this.setDate(date)}
+        />
+
+        <input className="search-box" placeholder="Search"
+          onChange={el => { dispatch({ type: 'SET_SEARCH', payload: { search: el.target.value } }) }}
+        />
       </div>
     )
   }

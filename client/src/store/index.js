@@ -11,12 +11,18 @@ const setDates = function(state, payload) {
   return { ...state, dates: payload.dates }
 }
 
+const setSearch = function(state, payload) {
+  return { ...state, search: payload.search }
+}
+
 const rootReducer = function(state, action) {
   switch (action.type) {
     case 'SET_STORIES':
       return setStories(state, action.payload)
     case 'SET_DATES':
       return setDates(state, action.payload)
+    case 'SET_SEARCH':
+      return setSearch(state, action.payload)
     default:
       return state
   }

@@ -37,13 +37,18 @@ class InstaView extends Component {
 
   render() {
     const URL_BASE = 'http://localhost:3000/api/insta/story/'
-    const { stories } = this.props
+    const { stories, search } = this.props
+
+    let filteredStories = stories
+    if (search !== '') {
+      filteredStories = stories.filter(story => story.src.indexOf(search) !== -1)
+    }
 
     return (
       <div id="insta-view">
-        { stories ?
+        { filteredStories ?
           <div className="story-list">
-            { stories.map(story => (
+            { filteredStories.map(story => (
               <span className="story-card" key={ story.src } title={ story.src }>
                 <a href={ URL_BASE + story.src }>
                   <img className="story-thumbnail" src={ URL_BASE + story.thumbnail } alt={ story.src } />
@@ -62,7 +67,8 @@ class InstaView extends Component {
 }
 
 const mapStateToProps = state => ({
-  stories: state.stories
+  stories: state.stories,
+  search: state.search
 })
 
 export default connect(mapStateToProps, null)(InstaView)
