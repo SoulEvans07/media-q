@@ -5,7 +5,7 @@ import { AllHtmlEntities as entities } from 'html-entities'
 import exif from '../helpers/exif-wrapper'
 import Thumbler from '../helpers/thumbler-wrapper'
 import ffmpeg from '../helpers/ffmpeg-wrapper'
-import { storiesFolder } from '../config/vars'
+import { storiesFolder, trashbinFolder } from '../config/vars'
 import {
   getDateString,
   matchDateString,
@@ -142,8 +142,9 @@ const deleteStory = async function(req, res, next) {
   const srcPath = path.join(storiesFolder, date, fileName)
   const thumbnailPath = path.join(storiesFolder, date, base + THUMBNAIL_EXT)
 
-  fs.unlinkSync(srcPath)
   fs.unlinkSync(thumbnailPath)
+  fs.copyFileSync(srcPath, path.join(trashbinFolder, fileName))
+  fs.unlinkSync(srcPath)
 
   return res.status(200).send()
 }

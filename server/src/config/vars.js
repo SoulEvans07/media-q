@@ -27,6 +27,7 @@ export const publicPath = path.join(__dirname, '../public')
 export const templateFolder = path.join(__dirname, '../templates/')
 
 export const targetFolder = path.join(__dirname, '../../target/')
+export const trashbinFolder = path.join(targetFolder, 'trashbin')
 export const instagramFolder = path.join(targetFolder, 'instagram/')
 export const lockFile = path.join(instagramFolder, '.lock')
 export const storiesFolder = path.join(instagramFolder, 'stories/')
