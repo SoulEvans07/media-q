@@ -4,7 +4,7 @@ import thunk from 'redux-thunk'
 import initialState from './initialState'
 
 const setStories = function(state, payload) {
-  return { ...state, stories: payload.stories }
+  return { ...state, stories: payload.stories /*.map(s => { s.date = new Date(s.date); return s })*/ }
 }
 
 const setDates = function(state, payload) {
@@ -15,14 +15,33 @@ const setSearch = function(state, payload) {
   return { ...state, search: payload.search }
 }
 
+const removeStory = function(state, payload) {
+  const newStories = [...state.stories]
+  const index = newStories.findIndex(el => el.src === payload.story.src)
+  newStories.splice(index, 1)
+  return { ...state, stories: newStories }
+}
+
+const setStory = function(state, payload) {
+  const newStories = [...state.stories]
+  const index = newStories.findIndex(el => el.src === payload.story.src)
+  newStories.splice(index, 1)
+  newStories.push({ ...payload.story, state: payload.state })
+  return { ...state, stories: newStories }
+}
+
 const rootReducer = function(state, action) {
   switch (action.type) {
+    case 'SET_STORY':
+      return setStory(state, action.payload)
     case 'SET_STORIES':
       return setStories(state, action.payload)
     case 'SET_DATES':
       return setDates(state, action.payload)
     case 'SET_SEARCH':
       return setSearch(state, action.payload)
+    case 'REMOVE_STORY':
+      return removeStory(state, action.payload)
     default:
       return state
   }

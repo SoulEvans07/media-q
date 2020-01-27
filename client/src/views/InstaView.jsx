@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import classNames from 'classnames'
 import './InstaView.scss'
 
 import Loader from '../components/Loader'
@@ -35,26 +36,57 @@ class InstaView extends Component {
     })
   }
 
+  deleteStory = (story) => {
+    const { dispatch } = this.props
+    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+    const delete_url = URL_BASE + story.src
+
+    dispatch({ type: 'SET_STORY', payload: { story, state: 'REMOVING' } })
+
+    fetch(delete_url, { method: 'DELETE' })
+    .then(() => {
+      dispatch({ type: 'REMOVE_STORY', payload: { story } })
+    })
+  }
+
   render() {
     const URL_BASE = 'http://localhost:3000/api/insta/story/'
     const { stories, search } = this.props
 
     let filteredStories = stories
-    if (search !== '') {
-      filteredStories = stories.filter(story => story.src.indexOf(search) !== -1)
+    if (filteredStories) {
+      filteredStories.sort((a, b) => new Date(a.date) - new Date(b.date)).reverse()
+
+      if (search !== '') {
+        filteredStories = filteredStories.filter(story => {
+          if (!story.src) console.log('[missing]', story.thumbnail)
+          return story.src.indexOf(search) !== -1
+        })
+      }
     }
 
     return (
       <div id="insta-view">
         { filteredStories ?
           <div className="story-list">
-            { filteredStories.map(story => (
-              <span className="story-card" key={ story.src } title={ story.src }>
-                <a href={ URL_BASE + story.src }>
-                  <img className="story-thumbnail" src={ URL_BASE + story.thumbnail } alt={ story.src } />
-                </a>
-              </span>
-            ))}
+            { filteredStories.map(story => {
+              const date = new Date(story.date)
+              const removing = story.state === 'REMOVING'
+              console.log(story)
+              return (
+                <span className={ classNames("story-card", { "removing": removing }) } key={ story.thumbnail }>
+                  <img className="story-thumbnail"
+                    src={ URL_BASE + story.thumbnail }
+                    alt={ story.src }
+                    onClick={!removing ? () => console.log(URL_BASE + story.src) : null}
+                  />
+                  <span className="story-control" onClick={() => this.deleteStory(story)}>
+                    <span className="icon fas fa-trash-alt" />
+                  </span>
+                  <span className="timestamp">{date.getHours().pad(2) + ':' + date.getMinutes().pad(2)}</span>
+                </span>
+              )
+            })}
           </div>
           :
           <div className="loading">

@@ -13,5 +13,6 @@ router.get('/story/dates', instaController.story.dates)
 
 
 router.get('/story/:filename', instaController.story.get)
+router.delete('/story/:filename', instaController.story.delete)
 
 export default router

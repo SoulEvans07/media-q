@@ -1,3 +1,6 @@
+/* eslint-disable no-extend-native */
+/* eslint-disable no-useless-escape */
+
 Number.prototype.pad = function(length, char = '0') { return String(this).padStart(length, char) }
 
 String.prototype.replaceAll = function (find, replace) {

@@ -53,6 +53,7 @@ const listStories = async function(req, res, next) {
   files.forEach(file => {
     const is_template = file.endsWith(THUMBNAIL_EXT)
     const base = file.substr(0, file.length - (is_template ? THUMBNAIL_EXT.length : 4 ))
+
     if (itemsMap[base] === undefined) {
       itemsMap[base] = {
         src: null,
@@ -61,7 +62,7 @@ const listStories = async function(req, res, next) {
       }
     }
 
-    if (file.endsWith(THUMBNAIL_EXT)) {
+    if (is_template) {
       itemsMap[base].thumbnail = file
     } else {
       itemsMap[base].date = convertDateTimeString(file)
@@ -106,7 +107,6 @@ const listStories = async function(req, res, next) {
   // })
 
   let itemsList = Object.values(itemsMap)
-  itemsList.sort((a, b) => a.date - b.date).reverse()
 
   return res.status(200).send(itemsList)
 }
@@ -132,6 +132,22 @@ const getStory = async function(req, res, next) {
   // }
 }
 
+const deleteStory = async function(req, res, next) {
+  const THUMBNAIL_EXT = '.thumbnail.jpg'
+  const fileName = req.params.filename
+
+  const base = fileName.substr(0, fileName.length - 4)
+  const date = matchDateString(fileName)
+
+  const srcPath = path.join(storiesFolder, date, fileName)
+  const thumbnailPath = path.join(storiesFolder, date, base + THUMBNAIL_EXT)
+
+  fs.unlinkSync(srcPath)
+  fs.unlinkSync(thumbnailPath)
+
+  return res.status(200).send()
+}
+
 const refresh = async function(req, res, next) {
   main()
     .then(result => res.status(200).send(result))
@@ -147,6 +163,7 @@ const getAvailableDates = async function(req, res, next) {
 export const story = {
   list: listStories,
   get: getStory,
+  delete: deleteStory,
   dates: getAvailableDates,
   refresh: refresh
 }
