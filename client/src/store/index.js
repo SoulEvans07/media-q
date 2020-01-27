@@ -39,7 +39,8 @@ const removeStory = function(state, payload) {
   const newStories = [...state.stories]
   const index = newStories.findIndex(el => el.src === payload.story.src)
   newStories.splice(index, 1)
-  return { ...state, stories: newStories }
+  const filteredStories = filterAndSortStories(newStories, state.search)
+  return { ...state, stories: newStories, filteredStories }
 }
 
 const setStory = function(state, payload) {
@@ -47,7 +48,8 @@ const setStory = function(state, payload) {
   const index = newStories.findIndex(el => el.src === payload.story.src)
   newStories.splice(index, 1)
   newStories.push({ ...payload.story, state: payload.state })
-  return { ...state, stories: newStories }
+  const filteredStories = filterAndSortStories(newStories, state.search)
+  return { ...state, stories: newStories, filteredStories }
 }
 
 const setSelectedMedia = function(state, payload) {
