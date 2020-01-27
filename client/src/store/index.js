@@ -3,8 +3,27 @@ import thunk from 'redux-thunk'
 
 import initialState from './initialState'
 
+const filterAndSortStories = function(stories, search) {
+  let filteredStories = []
+
+  if (stories !== null) {
+    filteredStories = [...stories]
+    filteredStories.sort((a, b) => new Date(a.date) - new Date(b.date)).reverse()
+
+    if (search !== '') {
+      filteredStories = filteredStories.filter(story => {
+        if (!story.src) console.log('[missing src]', story.thumbnail)
+        return story.src.indexOf(search) !== -1
+      })
+    }
+  }
+
+  return filteredStories
+}
+
 const setStories = function(state, payload) {
-  return { ...state, stories: payload.stories /*.map(s => { s.date = new Date(s.date); return s })*/ }
+  const filteredStories = filterAndSortStories(payload.stories, state.search)
+  return { ...state, stories: payload.stories, filteredStories }
 }
 
 const setDates = function(state, payload) {
@@ -12,7 +31,8 @@ const setDates = function(state, payload) {
 }
 
 const setSearch = function(state, payload) {
-  return { ...state, search: payload.search }
+  const filteredStories = filterAndSortStories(state.stories, payload.search)
+  return { ...state, search: payload.search, filteredStories }
 }
 
 const removeStory = function(state, payload) {
@@ -30,6 +50,10 @@ const setStory = function(state, payload) {
   return { ...state, stories: newStories }
 }
 
+const setSelectedMedia = function(state, payload) {
+  return { ...state, selectedMedia: payload.selectedMedia }
+}
+
 const rootReducer = function(state, action) {
   switch (action.type) {
     case 'SET_STORY':
@@ -42,6 +66,8 @@ const rootReducer = function(state, action) {
       return setSearch(state, action.payload)
     case 'REMOVE_STORY':
       return removeStory(state, action.payload)
+    case 'SET_SELECTED_MEDIA':
+      return setSelectedMedia(state, action.payload)
     default:
       return state
   }

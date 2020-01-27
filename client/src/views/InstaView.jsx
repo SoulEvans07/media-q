@@ -49,36 +49,31 @@ class InstaView extends Component {
     })
   }
 
+  setSelectedMedia = (index, story) => {
+    const { dispatch } = this.props
+    dispatch({
+      type: 'SET_SELECTED_MEDIA',
+      payload: { selectedMedia: { index, story: { ...story } } }
+    })
+  }
+
   render() {
     const URL_BASE = 'http://localhost:3000/api/insta/story/'
-    const { stories, search } = this.props
-
-    let filteredStories = stories
-    if (filteredStories) {
-      filteredStories.sort((a, b) => new Date(a.date) - new Date(b.date)).reverse()
-
-      if (search !== '') {
-        filteredStories = filteredStories.filter(story => {
-          if (!story.src) console.log('[missing]', story.thumbnail)
-          return story.src.indexOf(search) !== -1
-        })
-      }
-    }
+    const { filteredStories } = this.props
 
     return (
       <div id="insta-view">
         { filteredStories ?
           <div className="story-list">
-            { filteredStories.map(story => {
+            { filteredStories.map((story, index) => {
               const date = new Date(story.date)
               const removing = story.state === 'REMOVING'
-              console.log(story)
               return (
                 <span className={ classNames("story-card", { "removing": removing }) } key={ story.thumbnail }>
                   <img className="story-thumbnail"
                     src={ URL_BASE + story.thumbnail }
                     alt={ story.src }
-                    onClick={!removing ? () => console.log(URL_BASE + story.src) : null}
+                    onClick={!removing ? () => this.setSelectedMedia(index, story) : null}
                   />
                   <span className="story-control" onClick={() => this.deleteStory(story)}>
                     <span className="icon fas fa-trash-alt" />
@@ -99,8 +94,7 @@ class InstaView extends Component {
 }
 
 const mapStateToProps = state => ({
-  stories: state.stories,
-  search: state.search
+  filteredStories: state.filteredStories
 })
 
 export default connect(mapStateToProps, null)(InstaView)
