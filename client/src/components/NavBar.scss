@@ -8,10 +8,26 @@
   background: rgb(255, 255, 255);
   border-bottom: 1px solid hsl(0, 0%, 86%);
 
+  @keyframes hue-circle {
+    0%   { filter: sepia(1) brightness(0.85) hue-rotate(220deg) saturate(5); }
+    25%  { filter: sepia(1) brightness(0.85) hue-rotate(calc(220deg + 90deg))  saturate(7); }
+    40%  { filter: sepia(1) brightness(1.50) hue-rotate(calc(220deg + 150deg)) saturate(5); }
+    100% { filter: sepia(1) brightness(0.85) hue-rotate(calc(220deg + 360deg)) saturate(5); }
+  }
+
   .logo {
     width: 30px;
     height: 30px;
     margin: 0 10px 0 0;
+    cursor: pointer;
+
+    filter: sepia(1) brightness(0.85) hue-rotate(220deg) saturate(5);
+
+    &:hover {
+      animation-name: hue-circle;
+      animation-iteration-count: infinite;
+      animation-duration: 30s;
+    }
   }
 
   .react-datepicker {
@@ -38,26 +54,77 @@
   }
 
   .date-input {
+    $date-input-height: 30px;
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: 30px;
-    border-radius: 3px;
-    color: hsl(0, 0%, 60%);
-    border: 1px solid hsl(0, 0%, 86%);;
-    background: hsl(0, 0%, 98%);
-    padding: 0 10px;
 
     margin: 0 5px;
 
-    &:hover {
-      background: hsl(0, 0%, 95%);
+    .date {
+      cursor: pointer;
+      height: $date-input-height;
+      align-items: center;
+      color: hsl(0, 0%, 60%);
+      border-width: 1px 0;
+      border-style: solid;
+      border-color: hsl(0, 0%, 86%);
+      background: hsl(0, 0%, 98%);
+      padding: 0 10px;
+
+
+      &:hover {
+        background: hsl(0, 0%, 95%);
+      }
+
+      &:active {
+        background: hsl(0, 0%, 92%);
+      }
     }
 
-    &:active {
-      background: hsl(0, 0%, 92%);
+    .date-controls {
+      cursor: pointer;
+      height: calc(#{$date-input-height} - 2px);
+      padding: 0 7px;
+      display: flex;
+      align-items: center;
+      background: hsl(0, 0%, 98%);
+      color: hsl(0, 0%, 60%);
+
+      border-style: solid;
+      border-color: hsl(0, 0%, 86%);
+
+      &.left {
+        border-width: 1px 0 1px 1px;
+        border-radius: 3px 0 0 3px;
+        border-right: 1px solid hsl(0, 0%, 95%);
+      }
+
+      &.right {
+        border-width: 1px 1px 1px 0;
+        border-radius: 0 3px 3px 0;
+        border-left: 1px solid hsl(0, 0%, 95%);
+      }
+
+      &:hover {
+        background: hsl(0, 0%, 95%);
+      }
+
+      &:active {
+        background: hsl(0, 0%, 92%);
+      }
+
+      &.disabled {
+        cursor: default;
+        background: hsl(0, 0%, 95%);
+
+        &:hover, &:active {
+          background: hsl(0, 0%, 95%);
+        }
+      }
     }
   }
+
 
   .search-box {
     display: flex;
@@ -83,6 +150,11 @@
     }
   }
 
+  @keyframes spin180 {
+    0%   { transform: translate3d(0, 0, 0) rotate(-0.001deg) }
+    100% { transform: translate3d(0, -0.5px, 0) rotate(180.001deg) }
+  }
+
   .refresh-btn {
     display: flex;
     flex-direction: row;
@@ -92,24 +164,30 @@
     color: hsl(0, 0%, 60%);
     border: 1px solid hsl(0, 0%, 86%);;
     background: hsl(0, 0%, 98%);
-    padding: 0 8px;
+    padding: 0 10px 0 8px;
 
     margin: 0 5px;
 
     .btn-label {
-      padding: 0 2px;
+      padding: 0 6px 0 2px;
       line-height: 16px;
     }
 
     .btn-icon {
+      display: block;
+      font-size: 14px;
       line-height: 16px;
-      padding: 0 2px 0 4px;
       color: hsl(0, 0%, 70%);
       fill: hsl(0, 0%, 70%);
     }
 
     &:hover {
       background: hsl(0, 0%, 95%);
+
+      .btn-icon {
+        animation: spin180 0.25s linear;
+        transform: translate3d(0, -0.5px, 0) rotate(180.001deg);
+      }
     }
 
     &:active {

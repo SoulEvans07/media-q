@@ -14,12 +14,8 @@ class InstaView extends Component {
 
     fetch(dates_url)
     .then(res => res.json())
-    .then(data => {
-      dispatch({ type: 'SET_DATES', payload: { dates: data } })
-    }).catch(e => {
-      dispatch({ type: 'SET_DATES', payload: { dates: [] } })
-      console.log(e)
-    })
+    .then(data => dispatch({ type: 'SET_DATES', payload: { dates: data } }))
+    .catch(e => dispatch({ type: 'SET_DATES', payload: { dates: [] } }))
 
     fetch(latest_url)
     .then(res => res.json())
