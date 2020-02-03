@@ -23,7 +23,7 @@ const filterAndSortStories = function(stories, search) {
 
 const setStories = function(state, payload) {
   const filteredStories = filterAndSortStories(payload.stories, state.search)
-  return { ...state, stories: payload.stories, filteredStories }
+  return { ...state, stories: payload.stories, filteredStories, stories_loading: false }
 }
 
 const setDates = function(state, payload) {
@@ -70,6 +70,10 @@ const rootReducer = function(state, action) {
       return removeStory(state, action.payload)
     case 'SET_SELECTED_MEDIA':
       return setSelectedMedia(state, action.payload)
+    case 'START_REFRESH':
+      return { ...state, stories_loading: true }
+    case 'START_REFRESH':
+      return { ...state, stories_loading: false }
     default:
       return state
   }

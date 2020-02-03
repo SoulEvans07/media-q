@@ -64,8 +64,12 @@ class InstaView extends Component {
             { filteredStories.map((story, index) => {
               const date = new Date(story.date)
               const removing = story.state === 'REMOVING'
+              const username = story.thumbnail.substring(0, story.thumbnail.length - "-XXXX-XX-XX-XXXXXX.thumbnail.jpg".length)
               return (
-                <span className={ classNames("story-card", { "removing": removing }) } key={ story.thumbnail }>
+                <span className={ classNames("story-card", { "removing": removing }) }
+                  key={ story.thumbnail }
+                  title={username}
+                >
                   <img className="story-thumbnail"
                     src={ URL_BASE + story.thumbnail }
                     alt={ story.src }

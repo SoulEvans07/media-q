@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import { createSelector } from 'reselect'
 import mouseTrap from 'react-mousetrap'
 import './MediaViewer.scss'
 
@@ -41,19 +42,20 @@ class MediaViewer extends Component {
   }
 
   close = e => {
-    const { dispatch } = this.props
     e.stopPropagation()
+    const { dispatch } = this.props
     dispatch({ type: 'SET_SELECTED_MEDIA', payload: { selectedMedia: null } })
   }
 
-  render() {
-    const DATE_TMP = '-XXXX-XX-XX-XXXXXX'
-    const EXT_TMP = '.XXX'
-    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+  openUser = e => {
+    e.stopPropagation()
     const { selectedMedia } = this.props
+    window.open("https://www.instagram.com/" + selectedMedia.username, '_blank')
+  }
 
-    const date = new Date(selectedMedia.story.date)
-    const username = selectedMedia.story.src.substring(0, selectedMedia.story.src.length - DATE_TMP.length - EXT_TMP.length)
+  render() {
+    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+    const { date, username, story } = this.props.selectedMedia
 
     return (
       <div
@@ -65,20 +67,22 @@ class MediaViewer extends Component {
 
         <div className="media-container">
           <div className="header">
-            <span className="username">{ username }</span>
+            <span className="username" onClick={this.openUser}>
+              { username }
+            </span>
             <span className="timestamp">{ date.getHours().pad(2) + ':' + date.getMinutes().pad(2) }</span>
           </div>
-          { selectedMedia.story.is_video ?
+          { story.is_video ?
             <video className="media" autoPlay controls
-              key={selectedMedia.story.src}
+              key={story.src}
               onClick={this.prevent}
             >
-              <source type="video/mp4" src={ URL_BASE + selectedMedia.story.src } />
+              <source type="video/mp4" src={ URL_BASE + story.src } />
             </video>
             :
             <img className="media"
-              src={ URL_BASE + selectedMedia.story.src }
-              alt={ selectedMedia.story.src }
+              src={ URL_BASE + story.src }
+              alt={ story.src }
               onClick={e => e.stopPropagation()}
             />
           }
@@ -90,8 +94,23 @@ class MediaViewer extends Component {
   }
 }
 
-const mapStateToProps = state => ({
-  filteredStories: state.filteredStories
+const getSelectedMedia = (state, props) => props.selectedMedia
+
+const selectedMediaSelector = createSelector([getSelectedMedia],
+  selectedMedia => {
+    const DATE_TMP = '-XXXX-XX-XX-XXXXXX'
+    const EXT_TMP = '.XXX'
+
+    const date = new Date(selectedMedia.story.date)
+    const username = selectedMedia.story.src.substring(0, selectedMedia.story.src.length - DATE_TMP.length - EXT_TMP.length)
+
+    return { ...selectedMedia, date, username }
+  }
+)
+
+const mapStateToProps = (state, props) => ({
+  filteredStories: state.filteredStories,
+  selectedMedia: selectedMediaSelector(state, props)
 })
 
 export default mouseTrap(connect(mapStateToProps, null)(MediaViewer))

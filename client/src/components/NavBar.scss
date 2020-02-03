@@ -31,6 +31,7 @@
   }
 
   .react-datepicker {
+    user-select: none;
     font-size: 0.8rem !important;
   }
 
@@ -156,6 +157,7 @@
   }
 
   .refresh-btn {
+    cursor: pointer;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -181,7 +183,15 @@
       fill: hsl(0, 0%, 70%);
     }
 
-    &:hover {
+    &.loading {
+      cursor: default;
+      
+      .btn-icon {
+        animation: spin180 0.5s linear infinite;
+      }
+    }
+
+    &:not(.loading):hover {
       background: hsl(0, 0%, 95%);
 
       .btn-icon {
@@ -190,7 +200,7 @@
       }
     }
 
-    &:active {
+    &:not(.loading):active {
       background: hsl(0, 0%, 92%);
     }
   }
