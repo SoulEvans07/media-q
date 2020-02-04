@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import { createSelector } from 'reselect'
 import classNames from 'classnames'
 import './InstaView.scss'
 
@@ -61,27 +62,22 @@ class InstaView extends Component {
       <div id="insta-view">
         { filteredStories ?
           <div className="story-list">
-            { filteredStories.map((story, index) => {
-              const date = new Date(story.date)
-              const removing = story.state === 'REMOVING'
-              const username = story.thumbnail.substring(0, story.thumbnail.length - "-XXXX-XX-XX-XXXXXX.thumbnail.jpg".length)
-              return (
-                <span className={ classNames("story-card", { "removing": removing }) }
-                  key={ story.thumbnail }
-                  title={username}
-                >
-                  <img className="story-thumbnail"
-                    src={ URL_BASE + story.thumbnail }
-                    alt={ story.src }
-                    onClick={!removing ? () => this.setSelectedMedia(index, story) : null}
-                  />
-                  <span className="story-control" onClick={() => this.deleteStory(story)}>
-                    <span className="icon fas fa-trash-alt" />
-                  </span>
-                  <span className="timestamp">{date.getHours().pad(2) + ':' + date.getMinutes().pad(2)}</span>
+            { filteredStories.map((story, index) => (
+              <span className={ classNames("story-card", { "removing": story.isRemoving }) }
+                key={ story.thumbnail }
+                title={ story.username }
+              >
+                <img className="story-thumbnail"
+                  src={ URL_BASE + story.thumbnail }
+                  alt={ story.src }
+                  onClick={!story.isRemoving ? () => this.setSelectedMedia(index, story) : null}
+                />
+                <span className="story-control" onClick={() => this.deleteStory(story)}>
+                  <span className="icon fas fa-trash-alt" />
                 </span>
-              )
-            })}
+                <span className="timestamp">{story.date.getHours().pad(2) + ':' + story.date.getMinutes().pad(2)}</span>
+              </span>
+            ))}
           </div>
           :
           <div className="loading">
@@ -93,8 +89,34 @@ class InstaView extends Component {
   }
 }
 
+
+const getFilteredStories = state => state.filteredStories
+
+const filteredStoriesSelector = createSelector([getFilteredStories],
+  filteredStories => {
+    if (!filteredStories) return filteredStories
+
+    const DATE_TMP = '-XXXX-XX-XX-XXXXXX'
+    const EXT_TMP = '.XXX'
+
+    let newFilteredStories = [...filteredStories]
+    newFilteredStories = newFilteredStories.map(story => {
+      if (!story.src) throw new Error('Missing source: ' + story.thumbnail)
+      if (!story.thumbnail) throw new Error('Missing thumbnail: ' + story.src)
+
+      const date = new Date(story.date)
+      const username = story.src.substring(0, story.src.length - DATE_TMP.length - EXT_TMP.length)
+      const isRemoving = story.state === 'REMOVING'
+
+      return { ...story, date, username, isRemoving }
+    })
+
+    return newFilteredStories
+  }
+)
+
 const mapStateToProps = state => ({
-  filteredStories: state.filteredStories
+  filteredStories: filteredStoriesSelector(state)
 })
 
 export default connect(mapStateToProps, null)(InstaView)
