@@ -157,6 +157,11 @@ const refresh = async function(req, res, next) {
 
 const getAvailableDates = async function(req, res, next) {
   const dateFolders = fs.readdirSync(storiesFolder)
+  const today = getDateString(new Date())
+
+  if (dateFolders.indexOf(today) === -1)
+    dateFolders.push(today)
+
   return res.status(200).send(dateFolders)
 }
 

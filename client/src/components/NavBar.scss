@@ -47,11 +47,26 @@
     top: 6px !important;
   }
 
+  .react-datepicker__day:hover {
+    background: hsla(206, 87%, 55%, 0.6);
+    color: white;
+  }
+
   .react-datepicker__day-name, .react-datepicker__day {
     margin: 2px !important;
     width: 1.3rem !important;
     padding: 2px 0 0;
     line-height: 1.3rem !important;
+  }
+
+  .react-datepicker__day--today {
+    border-radius: 0.3rem;
+    //border: 1px solid hsl(206, 67%, 30%);
+    box-shadow: 0 0 5px hsla(206, 67%, 50%, 0.6);
+  }
+
+  .react-datepicker__day--selected {
+    background: hsl(206, 67%, 50%);
   }
 
   .date-input {
@@ -185,7 +200,7 @@
 
     &.loading {
       cursor: default;
-      
+
       .btn-icon {
         animation: spin180 0.5s linear infinite;
       }

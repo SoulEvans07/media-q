@@ -71,6 +71,7 @@ class NavBar extends Component {
     fetch(stories_url)
     .then(res => res.json())
     .then(res => dispatch({ type: 'SET_STORIES', payload: { stories: res } }))
+    .catch(e => dispatch({ type: 'SET_STORIES', payload: { stories: [] } }))
   }
 
   nextDate = (dir) => {
