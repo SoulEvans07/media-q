@@ -56,6 +56,10 @@ const setSelectedMedia = function(state, payload) {
   return { ...state, selectedMedia: payload.selectedMedia }
 }
 
+const setSelectedDate = function(state, payload) {
+  return { ...state, selectedDate: payload.selectedDate }
+}
+
 const rootReducer = function(state, action) {
   switch (action.type) {
     case 'SET_STORY':
@@ -64,6 +68,8 @@ const rootReducer = function(state, action) {
       return setStories(state, action.payload)
     case 'SET_DATES':
       return setDates(state, action.payload)
+    case 'SET_SELECTED_DATE':
+      return setSelectedDate(state, action.payload)
     case 'SET_SEARCH':
       return setSearch(state, action.payload)
     case 'REMOVE_STORY':

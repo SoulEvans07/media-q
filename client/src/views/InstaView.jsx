@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import { createSelector } from 'reselect'
 import classNames from 'classnames'
+
 import './InstaView.scss'
 
 import Loader from '../components/Loader'
@@ -10,8 +11,8 @@ class InstaView extends Component {
 
   componentDidMount() {
     const { dispatch } = this.props
-    const dates_url = 'http://localhost:3000/api/insta/story/dates'
-    const latest_url = 'http://localhost:3000/api/insta/story/list/latest'
+    const dates_url = 'http://localhost:3333/api/insta/story/dates'
+    const latest_url = 'http://localhost:3333/api/insta/story/list/latest'
 
     fetch(dates_url)
     .then(res => res.json())
@@ -35,7 +36,7 @@ class InstaView extends Component {
 
   deleteStory = (story) => {
     const { dispatch } = this.props
-    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+    const URL_BASE = 'http://localhost:3333/api/insta/story/'
     const delete_url = URL_BASE + story.src
 
     dispatch({ type: 'SET_STORY', payload: { story, state: 'REMOVING' } })
@@ -55,7 +56,7 @@ class InstaView extends Component {
   }
 
   render() {
-    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+    const URL_BASE = 'http://localhost:3333/api/insta/story/'
     const { filteredStories } = this.props
 
     return (
@@ -94,15 +95,23 @@ const getFilteredStories = state => state.filteredStories
 
 const filteredStoriesSelector = createSelector([getFilteredStories],
   filteredStories => {
+    const isWin = navigator.appVersion.indexOf("Win") != -1
     if (!filteredStories) return filteredStories
 
     const DATE_TMP = '-XXXX-XX-XX-XXXXXX'
     const EXT_TMP = '.XXX'
 
     let newFilteredStories = [...filteredStories]
+    const errors = { src: [], thumb: [] }
     newFilteredStories = newFilteredStories.map(story => {
-      if (!story.src) throw new Error('Missing source: ' + story.thumbnail)
-      if (!story.thumbnail) throw new Error('Missing thumbnail: ' + story.src)
+      if (!story.src) {
+        errors.src.push(story.thumbnail)
+        return
+      }
+      if (!story.thumbnail) {
+        errors.thumb.push(story.src)
+        return
+      }
 
       const date = new Date(story.date)
       const username = story.src.substring(0, story.src.length - DATE_TMP.length - EXT_TMP.length)
@@ -110,6 +119,25 @@ const filteredStoriesSelector = createSelector([getFilteredStories],
 
       return { ...story, date, username, isRemoving }
     })
+
+    let errorMessage = null
+    if (errors.src.length > 0) {
+      errorMessage = 'Missing source for: \n' + errors.src.join(' ')
+    }
+    if (errors.thumb.length > 0) {
+      const l = errors.thumb[0].length
+      const dateFolder = errors.thumb[0].substr(l - DATE_TMP.length + 1 - EXT_TMP.length, 'XXXX-XX-XX'.length)
+      const command = `cd $HOME/workspace/media-q/server/target/instagram/stories/${dateFolder} ${isWin ? ';' : '&&'} rm `
+
+      const separator = isWin ? ', ' : ' '
+
+      if (!errorMessage) errorMessage = 'Missing thumbnail for: \n' + command + errors.thumb.join(separator)
+      else errorMessage += '\n\nMissing thumbnail for: \n' + command + errors.thumb.join(separator)
+    }
+    if (errorMessage) {
+      throw new Error(errorMessage)
+    }
+
 
     return newFilteredStories
   }

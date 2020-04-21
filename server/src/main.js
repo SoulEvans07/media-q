@@ -35,7 +35,8 @@ const getFileSize = function(path) {
 }
 
 const printDiskStat = async function(label) {
-  const diskSpace = await checkDiskSpace('/home')
+  const path = process.platform === 'win32' ? 'C:/' : '/home'
+  const diskSpace = await checkDiskSpace(path)
   const folderSize = await getFileSize(instagramFolder)
 
   const stat = {
@@ -121,7 +122,7 @@ const removeLock = function() {
   return timestamp
 }
 
-export const main = async function() {
+export const main = async function(io) {
   const instagram = await Instagram.createInstance(instagram_cred, sessionFile)
   const subjectTemplate = 'MediaQ Report {{{ time }}}'
   const messageTemplate = getTemplate('stats.mail')
@@ -137,7 +138,7 @@ export const main = async function() {
   let diskstat = await printDiskStat('before')
   data.before = diskstat
 
-  return downloadAll(instagram, storiesFolder, downloaderLogger).then(async (stats) => {
+  return downloadAll(instagram, storiesFolder, downloaderLogger, io).then(async (stats) => {
     //console.log('Done downloading\n')
     console.log('downloaded stories: ' + stats.count)
     if (stats.count > 0) {

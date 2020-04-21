@@ -1,4 +1,6 @@
 import express from 'express'
+import http from 'http'
+import socketIO from 'socket.io'
 import _ from 'lodash'
 import bodyParser from 'body-parser'
 import morgan from 'morgan'
@@ -11,7 +13,15 @@ import { publicPath, routesPath, logs } from './vars'
 const app = express()
 app.use(express.json())
 
-app.use(morgan(logs))
+const server = http.createServer(app)
+export const io = socketIO(server)
+app.use((req, res, next) => {
+  req.io = io
+  next()
+})
+
+
+//app.use(morgan(logs))
 app.use(cors())
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -34,4 +44,4 @@ _.mapValues(routes, (value, key) => {
 
 app.use(router)
 
-export default app
+export default server

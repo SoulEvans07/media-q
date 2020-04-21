@@ -54,7 +54,7 @@ class MediaViewer extends Component {
   }
 
   render() {
-    const URL_BASE = 'http://localhost:3000/api/insta/story/'
+    const URL_BASE = 'http://localhost:3333/api/insta/story/'
     const { date, username, story } = this.props.selectedMedia
 
     return (

@@ -150,7 +150,7 @@ const deleteStory = async function(req, res, next) {
 }
 
 const refresh = async function(req, res, next) {
-  main()
+  main(req.io)
     .then(result => res.status(200).send(result))
     .catch(e => res.status(500).send(e.message))
 }

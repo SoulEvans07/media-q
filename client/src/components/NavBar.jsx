@@ -6,9 +6,7 @@ import classnames from 'classnames'
 import './NavBar.scss'
 import 'react-datepicker/dist/react-datepicker.css'
 
-export const getDateString = function(date) {
-  return date.getFullYear() + '-' + (date.getMonth()+1).pad(2) + '-' + date.getDate().pad(2)
-}
+import { getDateString } from '../helpers'
 
 class CustomDateInput extends Component {
   render() {
@@ -26,47 +24,29 @@ class NavBar extends Component {
     super()
 
     this.state = {
-      status: null,
-      selectedDate: new Date()
+      status: null
     }
   }
 
   refresh = () => {
-    const { dispatch } = this.props
-    const { selectedDate } = this.state
+    const { dispatch, selectedDate } = this.props
 
-    const dates_url = 'http://localhost:3000/api/insta/story/dates'
-    const refresh_url = 'http://localhost:3000/api/insta/story/refresh'
-    const stories_url = 'http://localhost:3000/api/insta/story/list/' + getDateString(selectedDate)
+    const dates_url = 'http://localhost:3333/api/insta/story/dates'
+    const refresh_url = 'http://localhost:3333/api/insta/story/refresh'
+    const stories_url = 'http://localhost:3333/api/insta/story/list/' + getDateString(selectedDate)
 
     dispatch({ type: 'START_REFRESH' })
 
     fetch(refresh_url)
     .then(res => res.json())
     .catch(e => dispatch({ type: 'END_REFRESH' }))
-    .then(() => {
-      fetch(dates_url)
-      .then(res => res.json())
-      .then(data => dispatch({ type: 'SET_DATES', payload: { dates: data } }))
-      .catch(e => dispatch({ type: 'SET_DATES', payload: { dates: [] } }))
-
-      if (getDateString(selectedDate) === getDateString(new Date())) {
-        fetch(stories_url)
-        .then(res => res.json())
-        .then(res => dispatch({ type: 'SET_STORIES', payload: { stories: res } }))
-        .catch(e => dispatch({ type: 'END_REFRESH' }))
-      } else {
-        dispatch({ type: 'END_REFRESH' })
-      }
-    })
-    .catch(e => dispatch({ type: 'END_REFRESH' }))
   }
 
   setDate = (date) => {
-    this.setState({ selectedDate: date })
-
     const { dispatch } = this.props
-    const stories_url = 'http://localhost:3000/api/insta/story/list/' + getDateString(date)
+    dispatch({ type: 'SET_SELECTED_DATE', payload: { selectedDate: date } })
+
+    const stories_url = 'http://localhost:3333/api/insta/story/list/' + getDateString(date)
 
     fetch(stories_url)
     .then(res => res.json())
@@ -75,8 +55,7 @@ class NavBar extends Component {
   }
 
   nextDate = (dir) => {
-    const { selectedDate } = this.state
-    const { dates } = this.props
+    const { dates, selectedDate } = this.props
     if (!dates) return null
 
     const index = dates.indexOf(getDateString(selectedDate))
@@ -96,8 +75,7 @@ class NavBar extends Component {
   }
 
   render() {
-    const { selectedDate } = this.state
-    const { dates, stories_loading, dispatch } = this.props
+    const { dates, stories_loading, dispatch, selectedDate } = this.props
 
     const dateList = dates ? dates.map(d => Date.parse(d)) : [ new Date() ]
 
@@ -146,7 +124,8 @@ class NavBar extends Component {
 
 const mapStateToProps = state => ({
   dates: state.dates,
-  stories_loading: state.stories_loading
+  stories_loading: state.stories_loading,
+  selectedDate: state.selectedDate
 })
 
 export default connect(mapStateToProps, null)(NavBar)

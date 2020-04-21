@@ -50,6 +50,7 @@
     "request": "^2.88.0",
     "require-all": "^3.0.0",
     "smtp-server": "^3.5.0",
+    "socket.io": "^2.3.0",
     "thumbler": "^1.1.2"
   },
   "devDependencies": {

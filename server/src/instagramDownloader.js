@@ -6,7 +6,7 @@ export const printProgressBar = function(index, length) {
   return '['.padEnd(index+1, '=') + ']'.padStart(length-index+1, '-')
 }
 
-export const downloadAll = function(instance, targetFolder, logger) {
+export const downloadAll = function(instance, targetFolder, logger, io) {
   return new Promise((resolve, reject) => {
     let userDone = 0
     instance.getStoryUrls().then(storiesByUser => {
@@ -33,10 +33,13 @@ export const downloadAll = function(instance, targetFolder, logger) {
 
             //if (logger) logger(user.padEnd(padName, ' '), userStat.downloaded, userStat.count, res.skipped)
             console.log(res.skipped ? 's' : 'd', user, stats.users[user], `${numberOfDone}/${userCount}`)
+            io.emit('download', { story: res, user, stats: stats.users[user], numberOfDone, userCount })
 
-            if (isFinal) resolve(stats)
+            //if (isFinal) resolve(stats)
           })
         })
+
+        resolve()
       })
     })
   })
