@@ -43,7 +43,7 @@
     "mustache": "^3.2.1",
     "node-cron": "^2.0.3",
     "node-fetch": "1.7.3",
-    "nodemailer": "^6.4.2",
+    "nodemailer": "^6.4.16",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "qs": "^6.9.1",
