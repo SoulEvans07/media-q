@@ -455,6 +455,7 @@ export class Instagram {
                 .then(() => promiseLog('started thumbnail', fileName))
                 .then(() => Thumbler(options))
                 .then(() => promiseLog('thumbnail finished', fileName))
+                .catch((e) => console.log('[error]', e, src, filePath))
             } else {
               promiseChain = promiseLog('started thumbnail', fileName)
                 .then(() => Thumbler(options))

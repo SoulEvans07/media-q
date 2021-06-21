@@ -3,13 +3,13 @@ import fs from 'fs'
 
 export const downloadFile = function(uri, filename){
   return new Promise((resolve, reject) => {
-      fetch(uri).then(res => {
-        const fileStream = fs.createWriteStream(filename)
-        fileStream.on('close', resolve)
+    fetch(uri).then(res => {
+      const fileStream = fs.createWriteStream(filename)
+      fileStream.on('close', resolve)
 
-        res.body.pipe(fileStream)
-        res.body.on('error', reject)
-      }).catch(reject)
+      res.body.pipe(fileStream)
+      res.body.on('error', reject)
+    }).catch(reject)
   })
 }
 
