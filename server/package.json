@@ -28,7 +28,7 @@
     "cors": "^2.8.5",
     "dotenv-safe": "^6.1.0",
     "exif2": "0.0.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-rate-limit": "^5.0.0",
     "express-session": "^1.17.0",
     "fluent-ffmpeg": "^2.1.2",
